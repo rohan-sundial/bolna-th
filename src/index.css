@@ -1,27 +1,92 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
+  /* Custom brand colors */
   --color-cream-50: #FDFBF7;
   --color-cream-100: #FAF6EE;
   --color-cream-200: #F5EDE0;
   --color-cream-300: #E8DCC8;
-  
+
   --color-clay-400: #C4A77D;
   --color-clay-500: #B8956C;
   --color-clay-600: #A67C52;
-  
+
   --color-terracotta-500: #D4785C;
   --color-terracotta-600: #C4603D;
   --color-terracotta-700: #A84E32;
-  
+
   --color-charcoal-700: #4A4540;
   --color-charcoal-800: #353330;
   --color-charcoal-900: #1F1E1C;
-  
+
   --font-family-sans: 'Work Sans', system-ui, sans-serif;
 }
 
-body {
-  @apply bg-cream-50 text-charcoal-800 antialiased font-sans;
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: #FDFBF7;
+  --foreground: #353330;
+  --card: #FAF6EE;
+  --card-foreground: #353330;
+  --popover: #FDFBF7;
+  --popover-foreground: #353330;
+  --primary: #C4603D;
+  --primary-foreground: #FDFBF7;
+  --secondary: #F5EDE0;
+  --secondary-foreground: #353330;
+  --muted: #F5EDE0;
+  --muted-foreground: #4A4540;
+  --accent: #F5EDE0;
+  --accent-foreground: #353330;
+  --destructive: #dc2626;
+  --border: #E8DCC8;
+  --input: #E8DCC8;
+  --ring: #D4785C;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-cream-50 text-charcoal-800 antialiased font-sans;
+  }
+}
+
+.search-highlight {
+  background-color: #F5D0C5;
+  color: var(--color-charcoal-800);
+  border-radius: 2px;
+  padding: 0 2px;
 }

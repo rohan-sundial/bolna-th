@@ -1,0 +1,238 @@
+{
+  "canvas": {
+    "id": "fa8f2d7b-3235-44ac-a577-84511b395299",
+    "name": "",
+    "description": "",
+    "account_id": 26561787,
+    "created": "2026-03-04T11:04:48.599568Z",
+    "lastchanged": "2026-03-04T11:07:33.963963Z",
+    "is_public": false,
+    "access_level": "can_edit"
+  },
+  "nodes": [
+    {
+      "id": "8f6818d3-4040-4440-98a4-645f9d631e18",
+      "type": "default",
+      "position": {
+        "x": 140,
+        "y": 108
+      },
+      "data": {
+        "label": "test 1",
+        "notesJson": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "dir": null,
+                "ignoreBidiAutoUpdate": null
+              },
+              "content": [
+                {
+                  "text": "some description",
+                  "type": "text"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "attrs": {
+                "dir": null,
+                "ignoreBidiAutoUpdate": null
+              }
+            }
+          ]
+        }
+      },
+      "measured": {
+        "width": 280,
+        "height": 107
+      },
+      "deletable": true,
+      "connectable": true,
+      "selected": false,
+      "className": ""
+    },
+    {
+      "id": "a68bed2f-4615-4990-8e92-445600c4583e",
+      "type": "default",
+      "position": {
+        "x": 580,
+        "y": 108
+      },
+      "data": {
+        "label": ""
+      },
+      "measured": {
+        "width": 280,
+        "height": 68
+      },
+      "deletable": true,
+      "connectable": true,
+      "selected": false,
+      "className": ""
+    },
+    {
+      "id": "bc2ddc5f-be24-4c7f-b1b7-1e1c0d24e0dc",
+      "type": "default",
+      "position": {
+        "x": 1300,
+        "y": 34
+      },
+      "data": {
+        "label": ""
+      },
+      "measured": {
+        "width": 280,
+        "height": 68
+      },
+      "deletable": true,
+      "connectable": true,
+      "selected": false,
+      "className": ""
+    },
+    {
+      "id": "75449974-c2bc-45f0-a20a-4726e9c94838",
+      "type": "path",
+      "position": {
+        "x": 940,
+        "y": 79
+      },
+      "data": {
+        "label": ""
+      },
+      "measured": {
+        "width": 120,
+        "height": 120
+      },
+      "deletable": true,
+      "selectable": true,
+      "selected": false,
+      "className": ""
+    },
+    {
+      "id": "c067ec89-5278-4cd5-8c58-705f2ddb77c2",
+      "type": "default",
+      "position": {
+        "x": 1300,
+        "y": 182
+      },
+      "data": {
+        "label": ""
+      },
+      "measured": {
+        "width": 280,
+        "height": 68
+      },
+      "deletable": true,
+      "connectable": true,
+      "selected": false,
+      "className": ""
+    },
+    {
+      "id": "ddebaaa8-9909-4739-84c4-99e23f6174c9",
+      "position": {
+        "x": 1230,
+        "y": 330
+      },
+      "data": {
+        "attributionSourceType": "MANUAL",
+        "label": "",
+        "app": "Agents by Zapier",
+        "services": [
+          {
+            "currentImplementation": {
+              "id": "App222036CLIAPI@3.1.0"
+            }
+          }
+        ]
+      },
+      "selected": false,
+      "type": "default",
+      "measured": {
+        "width": 280,
+        "height": 128
+      },
+      "dragging": true,
+      "className": ""
+    },
+    {
+      "id": "004557b6-decf-4c6f-8f6b-5a71776209e0",
+      "position": {
+        "x": 590,
+        "y": 250
+      },
+      "data": {
+        "attributionSourceType": "MANUAL",
+        "label": ""
+      },
+      "selected": false,
+      "type": "default",
+      "measured": {
+        "width": 280,
+        "height": 68
+      },
+      "className": ""
+    }
+  ],
+  "edges": [
+    {
+      "id": "d2bcbf57-a4b1-4563-b10d-3338bea18528",
+      "source": "8f6818d3-4040-4440-98a4-645f9d631e18",
+      "target": "a68bed2f-4615-4990-8e92-445600c4583e",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "deletable": true,
+      "selectable": true,
+      "markerEnd": {
+        "type": "arrow",
+        "strokeWidth": 1.5,
+        "color": "#413735"
+      }
+    },
+    {
+      "id": "0ac534d1-d1f2-4452-bb03-3e48c5a7960e",
+      "source": "75449974-c2bc-45f0-a20a-4726e9c94838",
+      "target": "bc2ddc5f-be24-4c7f-b1b7-1e1c0d24e0dc",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "deletable": true,
+      "selectable": true,
+      "markerEnd": {
+        "type": "arrow",
+        "strokeWidth": 1.5,
+        "color": "#413735"
+      }
+    },
+    {
+      "id": "45eb675b-1232-47db-a71a-efe5c5dfb96a",
+      "source": "75449974-c2bc-45f0-a20a-4726e9c94838",
+      "target": "c067ec89-5278-4cd5-8c58-705f2ddb77c2",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "deletable": true,
+      "selectable": true,
+      "markerEnd": {
+        "type": "arrow",
+        "strokeWidth": 1.5,
+        "color": "#413735"
+      }
+    },
+    {
+      "id": "8ef2d9d2-5206-498b-9a96-a03775314cd7",
+      "source": "a68bed2f-4615-4990-8e92-445600c4583e",
+      "target": "75449974-c2bc-45f0-a20a-4726e9c94838",
+      "sourceHandle": "right",
+      "targetHandle": "left",
+      "deletable": true,
+      "selectable": true,
+      "markerEnd": {
+        "type": "arrow",
+        "strokeWidth": 1.5,
+        "color": "#413735"
+      }
+    }
+  ],
+  "exportedAt": "2026-03-04T11:28:12.044Z"
+}
