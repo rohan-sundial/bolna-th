@@ -1,35 +1,90 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import cx from "classnames";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
+import { RootLayout } from "./components/layout/RootLayout";
+import { AuthProvider, useAuthContext } from "./context/AuthContext";
+import { BuilderPage } from "./pages/BuilderPage";
+import { FlowsPage } from "./pages/FlowsPage";
 
-function App() {
-  const [count, setCount] = useState(0)
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/flows" replace />,
+      },
+      {
+        path: "flows",
+        element: <FlowsPage />,
+      },
+      {
+        path: "flows/:id",
+        element: <BuilderPage />,
+      },
+    ],
+  },
+]);
 
+function LoadingScreen() {
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
+    <div
+      className={cx(
+        "min-h-screen",
+        "flex flex-col items-center justify-center",
+        "bg-cream-50",
+      )}
+    >
+      <div
+        className={cx(
+          "w-8 h-8",
+          "border-4 border-cream-300 border-t-terracotta-500",
+          "rounded-full animate-spin",
+        )}
+      />
+      <p className={cx("mt-4", "text-charcoal-700 font-medium")}>
+        Initializing...
       </p>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+function AppContent() {
+  const { isError, isLoading } = useAuthContext();
+
+  if (isError) {
+    return (
+      <div
+        className={cx(
+          "min-h-screen",
+          "flex items-center justify-center",
+          "bg-cream-50",
+        )}
+      >
+        <p className={cx("text-terracotta-600 font-medium")}>
+          Failed to initialize. Please refresh the page.
+        </p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  return <RouterProvider router={router} />;
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+export default App;
