@@ -38,9 +38,23 @@ export function useCanvasState({ workflow, workflowId, onSave }: UseCanvasStateO
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      setEdges((eds) => addEdge(connection, eds));
+      const sourceNode = nodes.find((n) => n.id === connection.source);
+      let label: string | undefined;
+
+      if (sourceNode?.type === 'condition' && connection.sourceHandle) {
+        const branchIndex = parseInt(connection.sourceHandle.replace('branch-', ''), 10);
+        const branches = (sourceNode.data as { branches?: string[] })?.branches || ['Yes', 'No'];
+        label = branches[branchIndex];
+      }
+
+      const edge = {
+        ...connection,
+        data: label ? { label } : undefined,
+      };
+
+      setEdges((eds) => addEdge(edge, eds));
     },
-    [setEdges]
+    [nodes, setEdges]
   );
 
   const { addNode, deleteNode } = useNodeOperations({ nodes, setNodes });
@@ -48,6 +62,7 @@ export function useCanvasState({ workflow, workflowId, onSave }: UseCanvasStateO
   return {
     nodes,
     edges,
+    setEdges,
     onNodesChange,
     onEdgesChange,
     onConnect,

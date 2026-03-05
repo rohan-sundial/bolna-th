@@ -20,6 +20,7 @@ export function useBuilderPageConfig(workflowId: string | undefined) {
   const {
     nodes,
     edges,
+    setEdges,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -58,6 +59,7 @@ export function useBuilderPageConfig(workflowId: string | undefined) {
     // Canvas
     nodes,
     edges,
+    setEdges,
     onNodesChange,
     onEdgesChange,
     onConnect,

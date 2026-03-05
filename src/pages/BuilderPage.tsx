@@ -20,6 +20,7 @@ export function BuilderPage() {
     isDeleting,
     nodes,
     edges,
+    setEdges,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -82,6 +83,7 @@ export function BuilderPage() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          setEdges={setEdges}
           onAddNode={addNode}
         />
       </div>

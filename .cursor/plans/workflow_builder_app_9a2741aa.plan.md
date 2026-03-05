@@ -31,7 +31,7 @@ todos:
     status: completed
   - id: phase-10
     content: "Phase 10: Edges and connections - Custom edge with labels, connection handling"
-    status: pending
+    status: completed
   - id: phase-11
     content: "Phase 11: Node sidebar editing - Edit ID, description, manage edges"
     status: pending
