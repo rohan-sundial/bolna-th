@@ -1,78 +1,37 @@
-import { useState, useEffect } from 'react';
 import cx from 'classnames';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { BuilderHeader } from '@/components/builder/BuilderHeader';
+import { BuilderCanvas } from '@/components/builder/BuilderCanvas';
 import { JSONPreviewPanel } from '@/components/builder/JSONPreviewPanel';
 import { EditDescriptionDialog } from '@/components/builder/EditDescriptionDialog';
 import { DeleteWorkflowDialog } from '@/components/flows/DeleteWorkflowDialog';
-import { useWorkflow } from '@/hooks/useWorkflow';
-import { useUpdateWorkflow } from '@/hooks/useUpdateWorkflow';
-import { useDeleteWorkflow } from '@/hooks/useDeleteWorkflow';
-import { workflowStorageService } from '@/services/workflowStorageService';
+import { useBuilderPageConfig } from '@/hooks/builder';
 
 export function BuilderPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { workflow, setWorkflow, isLoading, error } = useWorkflow(id);
-  const { updateWorkflow, isUpdating } = useUpdateWorkflow({
-    onSuccess: (updated) => {
-      setWorkflow(updated);
-    },
-  });
-  const { deleteWorkflow, isDeleting } = useDeleteWorkflow({
-    onSuccess: () => {
-      navigate('/flows');
-    },
-  });
 
-  const [descriptionDialogOpen, setDescriptionDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  useEffect(() => {
-    if (workflow) {
-      document.title = `${workflow.name} | Workflow Builder`;
-    }
-    return () => {
-      document.title = 'Workflow Builder';
-    };
-  }, [workflow?.name]);
-
-  const handleNameChange = async (name: string) => {
-    if (id && name !== workflow?.name) {
-      await updateWorkflow(id, { name });
-    }
-  };
-
-  const handleDescriptionSave = async (description: string) => {
-    if (id) {
-      await updateWorkflow(id, { description });
-      toast.success('Description updated');
-    }
-  };
-
-  const handleDuplicate = async () => {
-    if (!workflow) return;
-
-    try {
-      const newWorkflow = await workflowStorageService.create();
-      await workflowStorageService.update(newWorkflow.id, {
-        name: `${workflow.name} (Copy)`,
-        description: workflow.description,
-      });
-      toast.success('Workflow duplicated');
-      navigate(`/flows/${newWorkflow.id}`);
-    } catch {
-      toast.error('Failed to duplicate workflow');
-    }
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (id) {
-      await deleteWorkflow(id);
-    }
-  };
+  const {
+    workflow,
+    isLoading,
+    error,
+    isUpdating,
+    isDeleting,
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    handleNameChange,
+    handleDescriptionSave,
+    handleDuplicate,
+    handleDelete,
+    descriptionDialogOpen,
+    setDescriptionDialogOpen,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+  } = useBuilderPageConfig(id);
 
   if (isLoading) {
     return (
@@ -100,8 +59,8 @@ export function BuilderPage() {
     id: workflow.id,
     name: workflow.name,
     description: workflow.description,
-    nodes: [],
-    edges: [],
+    nodes,
+    edges,
   };
 
   return (
@@ -115,16 +74,14 @@ export function BuilderPage() {
         isSaving={isUpdating}
       />
 
-      <div className={cx('flex-1', 'bg-cream-100', 'relative', 'min-h-0')}>
-        <div
-          className={cx(
-            'absolute inset-0',
-            'flex items-center justify-center',
-            'text-charcoal-500'
-          )}
-        >
-          Canvas placeholder - React Flow will go here
-        </div>
+      <div className={cx('flex-1', 'min-h-0')}>
+        <BuilderCanvas
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+        />
       </div>
 
       <JSONPreviewPanel data={jsonData} />
@@ -140,7 +97,7 @@ export function BuilderPage() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         workflowName={workflow.name}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={handleDelete}
         isDeleting={isDeleting}
       />
     </div>

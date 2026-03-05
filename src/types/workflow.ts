@@ -1,14 +1,18 @@
+import type { Node, Edge } from '@xyflow/react';
+
 export interface IWorkflow {
   id: string;
   name: string;
   description: string;
+  nodes: Node[];
+  edges: Edge[];
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
 }
 
 export type UpdateWorkflowInput = Partial<
-  Pick<IWorkflow, "name" | "description">
+  Pick<IWorkflow, 'name' | 'description' | 'nodes' | 'edges'>
 >;
 
 export type IWorkflowStorageService = {

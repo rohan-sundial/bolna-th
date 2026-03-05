@@ -1,0 +1,1 @@
+export { useBuilderPageConfig } from './useBuilderPageConfig';

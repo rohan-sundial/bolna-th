@@ -8,7 +8,7 @@ const getCurrentUser = () => 'Rohan';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const parseWorkflowDates = (workflow: IWorkflow): IWorkflow => ({
+const parseWorkflow = (workflow: IWorkflow): IWorkflow => ({
   ...workflow,
   createdAt: new Date(workflow.createdAt),
   updatedAt: new Date(workflow.updatedAt),
@@ -20,26 +20,28 @@ export const workflowStorageService: IWorkflowStorageService = {
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) return [];
     const workflows = JSON.parse(data) as IWorkflow[];
-    return workflows.map(parseWorkflowDates);
+    return workflows.map(parseWorkflow);
   },
 
   getById: async (id: string) => {
     await delay(SIMULATED_DELAY_MS);
     const data = localStorage.getItem(STORAGE_KEY);
     if (!data) return null;
-    const workflows = (JSON.parse(data) as IWorkflow[]).map(parseWorkflowDates);
+    const workflows = (JSON.parse(data) as IWorkflow[]).map(parseWorkflow);
     return workflows.find((w) => w.id === id) ?? null;
   },
 
   create: async () => {
     await delay(SIMULATED_DELAY_MS);
     const data = localStorage.getItem(STORAGE_KEY);
-    const workflows = data ? (JSON.parse(data) as IWorkflow[]).map(parseWorkflowDates) : [];
+    const workflows = data ? (JSON.parse(data) as IWorkflow[]).map(parseWorkflow) : [];
     const now = new Date();
     const newWorkflow: IWorkflow = {
       id: uuidv4(),
       name: 'Untitled Workflow',
       description: '',
+      nodes: [],
+      edges: [],
       createdAt: now,
       updatedAt: now,
       createdBy: getCurrentUser(),
@@ -52,7 +54,7 @@ export const workflowStorageService: IWorkflowStorageService = {
   update: async (id: string, input: UpdateWorkflowInput) => {
     await delay(SIMULATED_DELAY_MS);
     const data = localStorage.getItem(STORAGE_KEY);
-    const workflows = data ? (JSON.parse(data) as IWorkflow[]).map(parseWorkflowDates) : [];
+    const workflows = data ? (JSON.parse(data) as IWorkflow[]).map(parseWorkflow) : [];
     const index = workflows.findIndex((w) => w.id === id);
     if (index === -1) {
       throw new Error(`Workflow ${id} not found`);
@@ -70,7 +72,7 @@ export const workflowStorageService: IWorkflowStorageService = {
   delete: async (id: string) => {
     await delay(SIMULATED_DELAY_MS);
     const data = localStorage.getItem(STORAGE_KEY);
-    const workflows = data ? (JSON.parse(data) as IWorkflow[]).map(parseWorkflowDates) : [];
+    const workflows = data ? (JSON.parse(data) as IWorkflow[]).map(parseWorkflow) : [];
     const filtered = workflows.filter((w) => w.id !== id);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
   },

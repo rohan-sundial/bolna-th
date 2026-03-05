@@ -17,7 +17,6 @@ export function useUpdateWorkflow(options?: UseUpdateWorkflowOptions) {
         setError(null);
         setIsUpdating(true);
         const updated = await workflowStorageService.update(id, input);
-        toast.success('Workflow updated');
         options?.onSuccess?.(updated);
         return updated;
       } catch (err) {

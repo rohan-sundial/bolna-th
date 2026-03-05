@@ -22,10 +22,10 @@ todos:
     status: completed
   - id: phase-7
     content: "Phase 7: Builder page shell - Header with inline edit, JSON panel placeholder, layout"
-    status: in_progress
+    status: completed
   - id: phase-8
     content: "Phase 8: React Flow basic canvas - Integration, Zustand store, pan/zoom/drag"
-    status: pending
+    status: completed
   - id: phase-9
     content: "Phase 9: Start node and node library - Custom nodes, draggable palette"
     status: pending
@@ -878,42 +878,49 @@ Even though localStorage is synchronous, we return Promises because:
 
 ## Phase 8: React Flow - Basic Canvas
 
-**Goal:** Integrate React Flow with basic node operations.
+**Goal:** Integrate React Flow with basic canvas functionality.
 
-**Dependencies:** `reactflow`
+**Dependencies:** `@xyflow/react` (React Flow v12)
 
 **Files:**
 
-- `src/components/builder/BuilderCanvas.tsx` - React Flow wrapper
-- `src/store/workflowStore.ts` - Zustand store for flow state
-- `src/pages/BuilderPage.tsx` - Integrate canvas
+- `src/components/builder/BuilderCanvas.tsx` - React Flow wrapper component
+- `src/pages/BuilderPage.tsx` - Holds nodes/edges state, integrates canvas
+- `src/types/workflow.ts` - Add node/edge types
 
-**Zustand store:**
+**State management:**
+
+Keep it simple - use `useState` in `BuilderPage` for nodes/edges. No Zustand for now.
 
 ```typescript
-interface WorkflowState {
-  nodes: Node[];
-  edges: Edge[];
-  selectedNodeId: string | null;
+// In BuilderPage.tsx
+const [nodes, setNodes] = useState<Node[]>([]);
+const [edges, setEdges] = useState<Edge[]>([]);
 
-  // Actions
-  addNode: (type: string, position: Position) => void;
-  updateNode: (id: string, data: Partial<WorkflowNode>) => void;
-  deleteNode: (id: string) => void;
-  setSelectedNode: (id: string | null) => void;
+// React Flow callbacks
+const onNodesChange = useCallback((changes) => {
+  setNodes((nds) => applyNodeChanges(changes, nds));
+}, []);
 
-  onNodesChange: OnNodesChange;
-  onEdgesChange: OnEdgesChange;
-  onConnect: OnConnect;
-}
+const onEdgesChange = useCallback((changes) => {
+  setEdges((eds) => applyEdgeChanges(changes, eds));
+}, []);
 ```
+
+**Auto-save:**
+
+- Debounce saves (1-2 seconds after last change) using a `useEffect` watching nodes/edges
+- React Flow fires events on every drag pixel, so debouncing is essential
+- Use the existing `useUpdateWorkflow` hook - same one used for name/description
+- Reuse the existing spinner → checkmark indicator in `BuilderHeader` (via `isUpdating` state)
+- No separate "canvas saving" state - one source of truth
 
 **Canvas features:**
 
-- Pan and zoom
-- Node selection
-- Node dragging
+- Pan and zoom (built-in)
+- Node dragging (built-in)
 - Background grid/dots
+- Fit view on load
 
 ---
 
