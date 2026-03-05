@@ -32,7 +32,6 @@ export function validateWorkflow(nodes: Node[], edges: Edge[]): ValidationResult
   const errors: ValidationError[] = [];
 
   // Build helper maps
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
   const incomingEdges = new Map<string, Edge[]>();
   const outgoingEdges = new Map<string, Edge[]>();
 

@@ -18,7 +18,7 @@ export function exportWorkflow(
   nodes: Node[],
   edges: Edge[]
 ): ExportedWorkflow {
-  const exportedNodes: ExportedNode[] = nodes.map((node) => {
+  const exportedNodes: ExportedNode[] = nodes.map((node): ExportedNode => {
     const data = node.data as NodeData;
     const type = node.type as 'start' | 'action' | 'condition';
 
@@ -26,13 +26,13 @@ export function exportWorkflow(
       case 'start':
         return {
           id: node.id,
-          type: 'start' as const,
-          data: {},
+          type: 'start',
+          data: {} as Record<string, never>,
         };
       case 'action':
         return {
           id: node.id,
-          type: 'action' as const,
+          type: 'action',
           data: {
             label: data.label || '',
             description: data.description || '',
@@ -42,7 +42,7 @@ export function exportWorkflow(
       case 'condition':
         return {
           id: node.id,
-          type: 'condition' as const,
+          type: 'condition',
           data: {
             label: data.label || '',
             description: data.description || '',
@@ -53,7 +53,7 @@ export function exportWorkflow(
       default:
         return {
           id: node.id,
-          type: 'action' as const,
+          type: 'action',
           data: {
             label: data.label || '',
             description: data.description || '',
