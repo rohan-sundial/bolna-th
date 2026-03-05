@@ -90,3 +90,8 @@
   border-radius: 2px;
   padding: 0 2px;
 }
+
+/* Custom animation delay utility */
+.animation-delay-300 {
+  animation-delay: 300ms;
+}

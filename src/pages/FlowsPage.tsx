@@ -55,10 +55,6 @@ export function FlowsPage() {
     await createWorkflow();
   };
 
-  const handleWorkflowClick = (id: string) => {
-    navigate(`/flows/${id}`);
-  };
-
   const handleDeleteConfirm = async () => {
     if (workflowToDelete) {
       await deleteWorkflow(workflowToDelete.id);
@@ -110,7 +106,6 @@ export function FlowsPage() {
               updatedAt={workflow.updatedAt}
               createdBy={workflow.createdBy}
               searchQuery={searchQuery}
-              onClick={() => handleWorkflowClick(workflow.id)}
               onDelete={() => setWorkflowToDelete(workflow)}
             />
           ))}

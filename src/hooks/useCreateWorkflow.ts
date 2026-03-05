@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { workflowStorageService } from '@/services/workflowStorageService';
 import { IWorkflow } from '@/types/workflow';
+import { useAuthContext } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
 interface UseCreateWorkflowOptions {
@@ -8,6 +9,7 @@ interface UseCreateWorkflowOptions {
 }
 
 export function useCreateWorkflow(options?: UseCreateWorkflowOptions) {
+  const { user } = useAuthContext();
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -15,7 +17,7 @@ export function useCreateWorkflow(options?: UseCreateWorkflowOptions) {
     try {
       setError(null);
       setIsCreating(true);
-      const newWorkflow = await workflowStorageService.create();
+      const newWorkflow = await workflowStorageService.create(user?.name);
       toast.success('Workflow created');
       options?.onSuccess?.(newWorkflow);
       return newWorkflow;
@@ -27,7 +29,7 @@ export function useCreateWorkflow(options?: UseCreateWorkflowOptions) {
     } finally {
       setIsCreating(false);
     }
-  }, [options]);
+  }, [options, user]);
 
   return { createWorkflow, isCreating, error };
 }

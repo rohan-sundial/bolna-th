@@ -4,8 +4,6 @@ import { IWorkflow, IWorkflowStorageService, UpdateWorkflowInput } from '@/types
 const STORAGE_KEY = 'flowbuilder_workflows';
 const SIMULATED_DELAY_MS = 1000;
 
-const getCurrentUser = () => 'Rohan';
-
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const parseWorkflow = (workflow: IWorkflow): IWorkflow => ({
@@ -31,7 +29,11 @@ export const workflowStorageService: IWorkflowStorageService = {
     return workflows.find((w) => w.id === id) ?? null;
   },
 
-  create: async () => {
+  create: async (createdBy?: string) => {
+    if (!createdBy) {
+      throw new Error('Cannot create workflow: user not authenticated');
+    }
+
     await delay(SIMULATED_DELAY_MS);
     const data = localStorage.getItem(STORAGE_KEY);
     const workflows = data ? (JSON.parse(data) as IWorkflow[]).map(parseWorkflow) : [];
@@ -44,7 +46,7 @@ export const workflowStorageService: IWorkflowStorageService = {
       edges: [],
       createdAt: now,
       updatedAt: now,
-      createdBy: getCurrentUser(),
+      createdBy,
     };
     workflows.push(newWorkflow);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(workflows));

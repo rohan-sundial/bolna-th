@@ -4,10 +4,12 @@ import { toast } from 'sonner';
 import { useWorkflow } from '@/hooks/useWorkflow';
 import { useUpdateWorkflow } from '@/hooks/useUpdateWorkflow';
 import { useDeleteWorkflow } from '@/hooks/useDeleteWorkflow';
+import { useAuthContext } from '@/context/AuthContext';
 import { workflowStorageService } from '@/services/workflowStorageService';
 
 export function useWorkflowActions(workflowId: string | undefined) {
   const navigate = useNavigate();
+  const { user } = useAuthContext();
   const { workflow, setWorkflow, isLoading, error } = useWorkflow(workflowId);
 
   const onUpdateSuccess = useCallback(
@@ -58,7 +60,7 @@ export function useWorkflowActions(workflowId: string | undefined) {
     if (!workflow) return;
 
     try {
-      const newWorkflow = await workflowStorageService.create();
+      const newWorkflow = await workflowStorageService.create(user?.name);
       await workflowStorageService.update(newWorkflow.id, {
         name: `${workflow.name} (Copy)`,
         description: workflow.description,
@@ -70,7 +72,7 @@ export function useWorkflowActions(workflowId: string | undefined) {
     } catch {
       toast.error('Failed to duplicate workflow');
     }
-  }, [workflow, navigate]);
+  }, [workflow, navigate, user]);
 
   const handleDelete = useCallback(async () => {
     if (workflowId) {

@@ -10,9 +10,9 @@ function getDefaultNodeData(type: NodeType) {
     case 'start':
       return {};
     case 'action':
-      return { label: 'Action' };
+      return { label: 'My Action' };
     case 'condition':
-      return { label: 'Condition', branches: ['Yes', 'No'] };
+      return { label: 'My Condition', branches: ['Yes', 'No'] };
   }
 }
 

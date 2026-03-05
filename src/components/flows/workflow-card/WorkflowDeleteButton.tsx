@@ -9,6 +9,7 @@ export function WorkflowDeleteButton({ onDelete }: WorkflowDeleteButtonProps) {
   return (
     <button
       onClick={(e) => {
+        e.preventDefault();
         e.stopPropagation();
         onDelete();
       }}

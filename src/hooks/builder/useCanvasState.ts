@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Node,
   Edge,
@@ -21,6 +21,36 @@ interface UseCanvasStateOptions {
 export function useCanvasState({ workflow, workflowId, onSave }: UseCanvasStateOptions) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [editingNode, setEditingNode] = useState<Node | null>(null);
+
+  const openNodeForEditing = useCallback((node: Node) => {
+    // Always look up fresh node from nodes array to ensure latest data
+    setNodes((currentNodes) => {
+      const freshNode = currentNodes.find((n) => n.id === node.id);
+      setEditingNode(freshNode || node);
+      return currentNodes;
+    });
+  }, [setNodes]);
+
+  const closeNodeEditor = useCallback(() => {
+    setEditingNode(null);
+  }, []);
+
+  const updateNodeData = useCallback(
+    (nodeId: string, data: Record<string, unknown>) => {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === nodeId
+            ? { ...node, data: { ...node.data, ...data } }
+            : node
+        )
+      );
+      setEditingNode((prev) =>
+        prev?.id === nodeId ? { ...prev, data: { ...prev.data, ...data } } : prev
+      );
+    },
+    [setNodes]
+  );
 
   const { isInitialized } = useCanvasInit({
     workflow,
@@ -38,35 +68,63 @@ export function useCanvasState({ workflow, workflowId, onSave }: UseCanvasStateO
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      const sourceNode = nodes.find((n) => n.id === connection.source);
-      let label: string | undefined;
-
-      if (sourceNode?.type === 'condition' && connection.sourceHandle) {
-        const branchIndex = parseInt(connection.sourceHandle.replace('branch-', ''), 10);
-        const branches = (sourceNode.data as { branches?: string[] })?.branches || ['Yes', 'No'];
-        label = branches[branchIndex];
-      }
-
-      const edge = {
-        ...connection,
-        data: label ? { label } : undefined,
-      };
-
-      setEdges((eds) => addEdge(edge, eds));
+      setEdges((eds) => addEdge(connection, eds));
     },
-    [nodes, setEdges]
+    [setEdges]
   );
 
   const { addNode, deleteNode } = useNodeOperations({ nodes, setNodes });
 
+  const deleteEdge = useCallback(
+    (edgeId: string) => {
+      setEdges((eds) => eds.filter((e) => e.id !== edgeId));
+    },
+    [setEdges]
+  );
+
+  const updateEdgeLabel = useCallback(
+    (edgeId: string, label: string) => {
+      setEdges((eds) =>
+        eds.map((e) =>
+          e.id === edgeId
+            ? { ...e, data: { ...e.data, label: label || undefined } }
+            : e
+        )
+      );
+    },
+    [setEdges]
+  );
+
+  const addEdgeFromSidebar = useCallback(
+    (sourceId: string, targetId: string, sourceHandle?: string) => {
+      const connection: Connection = {
+        source: sourceId,
+        target: targetId,
+        sourceHandle: sourceHandle || null,
+        targetHandle: null,
+      };
+
+      setEdges((eds) => addEdge(connection, eds));
+    },
+    [setEdges]
+  );
+
   return {
     nodes,
     edges,
+    setNodes,
     setEdges,
     onNodesChange,
     onEdgesChange,
     onConnect,
+    editingNode,
+    openNodeForEditing,
+    closeNodeEditor,
+    updateNodeData,
     addNode,
     deleteNode,
+    deleteEdge,
+    updateEdgeLabel,
+    addEdgeFromSidebar,
   };
 }

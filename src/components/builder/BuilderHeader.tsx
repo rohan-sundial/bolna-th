@@ -17,6 +17,7 @@ interface BuilderHeaderProps {
   onDescriptionEdit: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onImportJSON: () => void;
   isSaving?: boolean;
 }
 
@@ -26,6 +27,7 @@ export function BuilderHeader({
   onDescriptionEdit,
   onDuplicate,
   onDelete,
+  onImportJSON,
   isSaving,
 }: BuilderHeaderProps) {
   const [showSaved, setShowSaved] = useState(false);
@@ -98,6 +100,9 @@ export function BuilderHeader({
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onDescriptionEdit} className={menuItemClass}>
             Edit Description
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onImportJSON} className={menuItemClass}>
+            Import JSON
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onDuplicate} className={menuItemClass}>
             Duplicate

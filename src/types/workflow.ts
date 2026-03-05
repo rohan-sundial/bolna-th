@@ -18,7 +18,7 @@ export type UpdateWorkflowInput = Partial<
 export type IWorkflowStorageService = {
   getAll: () => Promise<IWorkflow[]>;
   getById: (id: string) => Promise<IWorkflow | null>;
-  create: () => Promise<IWorkflow>;
+  create: (createdBy?: string) => Promise<IWorkflow>;
   update: (id: string, input: UpdateWorkflowInput) => Promise<IWorkflow>;
   delete: (id: string) => Promise<void>;
 };

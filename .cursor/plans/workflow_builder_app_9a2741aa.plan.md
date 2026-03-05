@@ -34,16 +34,16 @@ todos:
     status: completed
   - id: phase-11
     content: "Phase 11: Node sidebar editing - Edit ID, description, manage edges"
-    status: pending
+    status: completed
   - id: phase-12
     content: "Phase 12: JSON preview panel - Live export, syntax highlighting"
-    status: pending
+    status: completed
   - id: phase-13
-    content: "Phase 13: Validation and error display - Rules, inline errors, visual indicators"
-    status: pending
+    content: "Phase 13: Validation - Panel with error list, inline node indicators, real-time validation"
+    status: completed
   - id: phase-14
-    content: "Phase 14: Polish and bonus - Copy/download/import JSON, delete key, warnings"
-    status: pending
+    content: "Phase 14: Import JSON - Reconstruct flow from exported JSON with auto-layout"
+    status: completed
 isProject: false
 ---
 
@@ -1035,44 +1035,59 @@ const onEdgesChange = useCallback((changes) => {
 
 ## Phase 11: Node Sidebar - Editing
 
-**Goal:** Build the right sidebar for editing selected node.
+**Goal:** Build a floating right sidebar for editing selected node properties.
 
 **Files:**
 
-- `src/components/builder/NodeSidebar.tsx` - Sidebar component
-- `src/components/builder/EdgeList.tsx` - Manage outgoing edges
-- `src/pages/BuilderPage.tsx` - Integrate sidebar
+- `src/components/builder/NodeSidebar.tsx` - Floating sidebar component
+- `src/pages/BuilderPage.tsx` - Integrate sidebar, track selected node
+
+**Sidebar style:**
+
+- Floating panel on the right side of the canvas (overlay, doesn't take up space)
+- Semi-transparent background with shadow (similar to NodeLibrary panel)
+- Appears when a node is selected, disappears when deselected
 
 **Sidebar layout:**
 
 ```
 ┌─────────────────────────┐
-│ Node Settings      [X]  │
+│ [icon] Action    [🗑][X] │  <- Header: type icon, type name, delete, close
 ├─────────────────────────┤
 │ ID                      │
-│ [____________]          │
+│ [abc-123-def] (disabled)│  <- Auto-generated UUID, readonly
+│                         │
+│ Name                    │
+│ [My Action Node    ]    │  <- Editable text input
 │                         │
 │ Description             │
-│ [____________]          │
-│ [____________]          │
+│ [                  ]    │  <- Editable textarea
+│ [                  ]    │
 │                         │
-│ Outgoing Edges          │
-│ ┌─────────────────────┐ │
-│ │ → NodeB | "cond"    │ │
-│ │              [del]  │ │
-│ └─────────────────────┘ │
-│ [+ Add Edge]            │
+│ ─── Condition only ──── │
+│ Branches                │
+│ [Yes              ] [×] │  <- Editable branch names
+│ [No               ] [×] │
+│ [+ Add Branch]          │
 └─────────────────────────┘
 ```
 
 **Features:**
 
-- Appears when node is selected
-- Close button (or click away to deselect)
-- ID field: text input, validates uniqueness on blur
-- Description: textarea
-- Edge list: shows target node + condition, delete button
-- Add edge: dropdown to pick target, input for condition
+- Appears when node is selected (via React Flow's `onSelectionChange` or node click)
+- Close button deselects the node
+- Delete button removes the node
+- ID field: disabled/readonly, shows auto-generated UUID
+- Name field: editable text input, updates node data on change
+- Description field: editable textarea
+- Branches (condition nodes only): list of editable branch names, can add/remove branches
+
+**Implementation notes:**
+
+- Track `selectedNode` state in BuilderPage or useBuilderPageConfig
+- Listen to React Flow's selection changes
+- Update node data via `setNodes` when fields change
+- Changes auto-save via existing useCanvasAutoSave mechanism
 
 ---
 
@@ -1080,90 +1095,268 @@ const onEdgesChange = useCallback((changes) => {
 
 **Goal:** Implement live JSON preview with syntax highlighting.
 
-**Dependencies:** `prism-react-renderer` (or similar)
+**Dependencies:** `prism-react-renderer`
 
 **Files:**
 
 - `src/components/builder/JSONPreviewPanel.tsx` - Full implementation
-- `src/lib/exportWorkflow.ts` - Convert store state to export format
+- `src/lib/exportWorkflow.ts` - Convert canvas state to clean export format
 
-**Export format:**
+**Export format (clean, no positions):**
 
 ```typescript
 interface ExportedWorkflow {
-  id: string;
   name: string;
-  startNodeId: string | null;
-  nodes: Array<{
-    id: string;
-    type: string;
-    label: string;
     description: string;
-  }>;
-  edges: Array<{
+  nodes: ExportedNode[];
+  edges: ExportedEdge[];
+}
+
+type ExportedNode =
+  | { id: string; type: 'start';     data: {} }
+  | { id: string; type: 'action';    data: { label: string; description: string; prompt: string } }
+  | { id: string; type: 'condition'; data: { label: string; description: string; prompt: string; branches: string[] } };
+
+interface ExportedEdge {
     id: string;
     source: string;
     target: string;
-    condition: string;
-  }>;
+  sourceHandle: string | null;
+  label: string | null;
 }
 ```
 
+```
+
+**Design decision:** Export is clean/minimal without node positions. On import, auto-layout (dagre) reconstructs positioning. This prioritizes readability over preserving manual layout.
+
 **Features:**
 
-- Collapsible panel at bottom
-- Expand/collapse toggle
-- Syntax highlighted JSON
-- Updates live as user edits
+- Collapsible/expandable panel (bottom or side)
+- Syntax highlighted JSON via prism-react-renderer
+- Line numbers
+- Copy to clipboard button
+- Updates live as user edits the canvas
 
 ---
 
 ## Phase 13: Validation and Error Display
 
-**Goal:** Implement validation rules with inline error display.
+**Goal:** Implement real-time validation with a dedicated validation panel and inline node indicators.
 
-**Files:**
+### Validation Panel (above JSON panel)
 
-- `src/lib/validation.ts` - Validation functions
-- `src/hooks/useValidation.ts` - Hook to run validation
-- `src/components/builder/NodeSidebar.tsx` - Show errors
-- `src/components/builder/BuilderCanvas.tsx` - Visual indicators
+**Location:** Positioned above the JSON Preview panel in BuilderPage
 
-**Validation rules:**
+**UI Features:**
+- Expandable/collapsible (click header to toggle)
+- Resizable with localStorage persistence (same pattern as JSON panel)
+- Header shows: "X validation errors" or "0 validation errors"
+- No copy button needed
+- No separate expand/collapse button (just click header)
 
-- Node IDs must be unique
-- Description is required for each node
-- Start node must exist
-- Edge targets must reference valid nodes
-- Edge conditions must not be empty
+**Interaction:**
+- Click on any error row → selects the node on canvas AND opens its sidebar panel
+- Real-time updates as user edits
 
-**Error display:**
+### Inline Node Indicators
 
-- Red border on invalid input fields
-- Error message below field
-- Red outline on invalid nodes in canvas
-- Validation runs on every change (debounced)
+**Visual:**
+- Error icon/badge on nodes that have validation errors
+- Small red indicator (e.g., alert circle icon)
+
+**Interaction:**
+- Hover on error icon → shows tooltip with error details for that specific node
+- Click on error icon → opens node sidebar for editing
+
+### Validation Rules
+
+| Rule | Applies To |
+|------|------------|
+| Node IDs must be unique | All nodes |
+| Start node must exist | Workflow |
+| Start node must have ≥1 outgoing connection | Start node |
+| `prompt` field is required | Action, Condition nodes |
+| `description` field is required | Action, Condition nodes |
+| Action node must have ≥1 incoming connection | Action nodes |
+| Condition node must have ≥1 incoming connection | Condition nodes |
+| Condition node must have ≥2 outgoing connections (for branches) | Condition nodes |
+| Node must be reachable from Start (not orphaned) | All nodes except Start |
+
+**Note:** All validation issues are errors (no warnings). Action nodes can be terminal (no outgoing connection required).
+
+### Files
+
+- `src/lib/validation.ts` - Validation functions and types
+- `src/hooks/builder/useValidation.ts` - Hook to run validation (real-time, memoized)
+- `src/components/builder/ValidationPanel.tsx` - The validation summary panel
+- `src/components/builder/nodes/*.tsx` - Add error indicator to node components
+- `src/pages/BuilderPage.tsx` - Integrate ValidationPanel
+
+### Implementation Steps
+
+1. Create validation types and functions in `src/lib/validation.ts`
+2. Create `useValidation` hook that takes nodes/edges and returns validation results
+3. Create `ValidationPanel` component (similar structure to JSONPreviewPanel)
+4. Add error indicator to node components (StartNode, ActionNode, ConditionNode)
+5. Wire up click-to-select-and-open-sidebar functionality
+6. Integrate into BuilderPage layout (above JSON panel)
 
 ---
 
-## Phase 14: Polish and Bonus Features
+## Phase 14: Import JSON
 
-**Goal:** Implement nice-to-have features.
+**Goal:** Implement JSON import to reconstruct flows on canvas.
 
-**Features:**
+### Already Completed (in earlier phases)
+- ✓ Copy JSON (JSON panel)
+- ✓ Download JSON (JSON panel)
+- ✓ Delete key removes selected node/edge (with confirmation)
+- ✓ Disconnected node validation (moved to Phase 13)
 
-- **Copy JSON:** Button in JSON panel → copy to clipboard
-- **Download JSON:** Button → download as `.json` file
-- **Import JSON:** Button in header → file picker or paste modal → validate with Zod → reconstruct flow
-- **Delete key:** Keyboard handler → delete selected node/edge
-- **Disconnected warning:** Highlight nodes not reachable from start node (yellow indicator)
+### Import JSON Feature
 
-**Files:**
+**UI Components:**
+- "Import JSON" menu item in BuilderHeader dropdown
+- `ImportJSONDialog` modal with:
+  - File picker button (styled, hidden native input)
+  - Monaco editor (editable) showing JSON content
+  - Validation status area (errors list or success indicator)
+  - Cancel and Import buttons (Import disabled until valid)
 
-- `src/components/builder/ImportModal.tsx` - Import JSON modal
-- `src/lib/importWorkflow.ts` - Parse and validate imported JSON
-- `src/hooks/useKeyboardShortcuts.ts` - Delete key handler
-- `src/lib/graphAnalysis.ts` - Reachability check
+### User Flow
+
+```
+
+1. Click "Import JSON" in header menu
+  ↓
+2. Modal opens (Monaco empty, Import disabled)
+  ↓
+3. Click "Choose File" → Select .json file
+  ↓
+4. JSON loads into Monaco editor
+  ↓
+5. Auto-validate with Zod (debounced on edit)
+  ├── Errors? → Show error list, Import stays disabled
+   └── Valid? → Show "Valid" indicator, Import enabled
+   ↓
+6. User can edit JSON in Monaco to fix errors
+  ↓
+7. Click "Import"
+  ↓
+8. Replace workflow nodes/edges, apply auto-layout, fit view
+  ↓
+9. Modal closes
+
+```
+
+### Zod Schema
+
+```typescript
+// Match our export format from exportWorkflow.ts
+const ImportedNodeSchema = z.object({
+  id: z.string(),
+  type: z.enum(['start', 'action', 'condition']),
+  data: z.object({
+    label: z.string().optional(),
+    description: z.string().optional(),
+    prompt: z.string().optional(),
+    branches: z.array(z.string()).optional(),
+  }),
+});
+
+const ImportedEdgeSchema = z.object({
+  id: z.string(),
+  source: z.string(),
+  target: z.string(),
+  sourceHandle: z.string().optional().nullable(),
+  data: z.object({
+    label: z.string().optional(),
+  }).optional(),
+});
+
+const ImportedWorkflowSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  nodes: z.array(ImportedNodeSchema),
+  edges: z.array(ImportedEdgeSchema),
+});
+```
+
+### Conversion to React Flow
+
+```typescript
+function convertToReactFlow(imported: ImportedWorkflow): { nodes: Node[], edges: Edge[] } {
+  // Convert nodes (set position to 0,0 - will be auto-layouted)
+  const nodes = imported.nodes.map(n => ({
+    id: n.id,
+    type: n.type,
+    position: { x: 0, y: 0 },
+    data: n.data,
+  }));
+
+  // Convert edges (add marker, style)
+  const edges = imported.edges.map(e => ({
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    sourceHandle: e.sourceHandle,
+    type: 'labeled',
+    data: e.data,
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#9a8478' },
+    style: { stroke: '#9a8478', strokeWidth: 1.5 },
+  }));
+
+  return { nodes, edges };
+}
+```
+
+### Files
+
+
+| File                                          | Purpose                                            |
+| --------------------------------------------- | -------------------------------------------------- |
+| `src/lib/importWorkflow.ts`                   | Zod schemas, validation, conversion functions      |
+| `src/components/builder/ImportJSONDialog.tsx` | Modal with file picker, Monaco, validation display |
+| `src/components/builder/BuilderHeader.tsx`    | Add "Import JSON" menu item                        |
+| `src/pages/BuilderPage.tsx`                   | Add dialog state, handleImport callback            |
+
+
+### Implementation Steps
+
+1. Install Zod: `npm install zod`
+2. Create `src/lib/importWorkflow.ts`:
+  - Define Zod schemas
+  - Export `validateImport(json: string)` → returns `{ success, data, errors }`
+  - Export `convertToReactFlow(data)` → returns `{ nodes, edges }`
+3. Create `src/components/builder/ImportJSONDialog.tsx`:
+  - File input (hidden) + styled button
+  - Monaco editor (editable, json language)
+  - Validation status (error list or success)
+  - Cancel/Import buttons
+4. Update `BuilderHeader.tsx`:
+  - Add "Import JSON" to dropdown menu
+  - Add `onImport` prop
+5. Update `BuilderPage.tsx`:
+  - Add `importDialogOpen` state
+  - Create `handleImport(nodes, edges)` that replaces workflow, runs auto-layout
+  - Wire up dialog
+
+### Completed Implementation
+
+- ✅ Installed Zod for schema validation
+- ✅ Created `src/lib/importWorkflow.ts` with Zod schemas and conversion functions
+- ✅ Created `src/components/builder/ImportJSONDialog.tsx` with:
+  - File picker button
+  - Monaco editor (350px height, editable)
+  - Real-time validation with debouncing
+  - Schema errors panel (scrollable, max-h-24)
+  - Workflow issues panel (warnings, don't block import)
+  - Cancel/Import buttons
+- ✅ Updated `BuilderHeader.tsx` with "Import JSON" menu item
+- ✅ Updated `BuilderPage.tsx` with import dialog state and handler
+- ✅ Auto-layout applied to imported nodes using dagre
+- ✅ Fit view triggered after import
 
 ---
 
@@ -1181,4 +1374,8 @@ Before submission, verify:
 - Import invalid JSON → error message
 - Export JSON → valid structure
 - Refresh page → data persists
+
+```
+
+```
 

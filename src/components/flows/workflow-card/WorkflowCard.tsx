@@ -1,4 +1,5 @@
 import cx from 'classnames';
+import { Link } from 'react-router-dom';
 import { WorkflowIcon } from './WorkflowIcon';
 import { WorkflowCardContent } from './WorkflowCardContent';
 import { WorkflowCardFooter } from './WorkflowCardFooter';
@@ -11,31 +12,30 @@ interface WorkflowCardProps {
   updatedAt: Date;
   createdBy: string;
   searchQuery?: string;
-  onClick: () => void;
   onDelete: () => void;
 }
 
 export function WorkflowCard({
+  id,
   name,
   description,
   updatedAt,
   createdBy,
   searchQuery = '',
-  onClick,
   onDelete,
 }: WorkflowCardProps) {
   return (
-    <div
-      onClick={onClick}
+    <Link
+      to={`/flows/${id}`}
       className={cx(
         'group',
         'relative',
-        'p-4',
+        'block p-4',
         'rounded-xl',
         'bg-cream-100 hover:bg-cream-200',
         'border border-cream-200 hover:border-cream-300',
-        'cursor-pointer',
-        'transition-all'
+        'transition-all',
+        'no-underline'
       )}
     >
       <WorkflowDeleteButton onDelete={onDelete} />
@@ -46,6 +46,6 @@ export function WorkflowCard({
         searchQuery={searchQuery}
       />
       <WorkflowCardFooter updatedAt={updatedAt} createdBy={createdBy} />
-    </div>
+    </Link>
   );
 }
