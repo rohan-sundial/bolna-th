@@ -23,6 +23,7 @@ export function BuilderPage() {
     onNodesChange,
     onEdgesChange,
     onConnect,
+    addNode,
     handleNameChange,
     handleDescriptionSave,
     handleDuplicate,
@@ -81,6 +82,7 @@ export function BuilderPage() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onAddNode={addNode}
         />
       </div>
 

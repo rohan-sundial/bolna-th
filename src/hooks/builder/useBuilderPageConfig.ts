@@ -23,6 +23,7 @@ export function useBuilderPageConfig(workflowId: string | undefined) {
     onNodesChange,
     onEdgesChange,
     onConnect,
+    addNode,
   } = useCanvasState({
     workflow,
     workflowId,
@@ -60,6 +61,7 @@ export function useBuilderPageConfig(workflowId: string | undefined) {
     onNodesChange,
     onEdgesChange,
     onConnect,
+    addNode,
 
     // Actions
     handleNameChange,

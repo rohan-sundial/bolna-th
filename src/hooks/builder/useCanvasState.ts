@@ -10,6 +10,7 @@ import {
 import { IWorkflow, UpdateWorkflowInput } from '@/types/workflow';
 import { useCanvasInit } from './useCanvasInit';
 import { useCanvasAutoSave } from './useCanvasAutoSave';
+import { useNodeOperations } from './useNodeOperations';
 
 interface UseCanvasStateOptions {
   workflow: IWorkflow | null;
@@ -42,11 +43,15 @@ export function useCanvasState({ workflow, workflowId, onSave }: UseCanvasStateO
     [setEdges]
   );
 
+  const { addNode, deleteNode } = useNodeOperations({ nodes, setNodes });
+
   return {
     nodes,
     edges,
     onNodesChange,
     onEdgesChange,
     onConnect,
+    addNode,
+    deleteNode,
   };
 }

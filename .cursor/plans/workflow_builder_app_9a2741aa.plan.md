@@ -27,8 +27,8 @@ todos:
     content: "Phase 8: React Flow basic canvas - Integration, Zustand store, pan/zoom/drag"
     status: completed
   - id: phase-9
-    content: "Phase 9: Start node and node library - Custom nodes, draggable palette"
-    status: pending
+    content: "Phase 9: Node types and library - Start/Action/Condition nodes, floating palette"
+    status: completed
   - id: phase-10
     content: "Phase 10: Edges and connections - Custom edge with labels, connection handling"
     status: pending
@@ -924,45 +924,112 @@ const onEdgesChange = useCallback((changes) => {
 
 ---
 
-## Phase 9: Start Node and Node Library
+## Phase 9: Node Types and Node Library
 
-**Goal:** Create node types and a component library panel to add nodes.
+**Goal:** Create custom node types and a floating library panel to add nodes to the canvas.
 
 **Files:**
 
-- `src/components/builder/nodes/StartNode.tsx` - Start node component
-- `src/components/builder/nodes/DefaultNode.tsx` - Regular node component
-- `src/components/builder/NodeLibrary.tsx` - Draggable node palette
+- `src/components/builder/nodes/StartNode.tsx` - Start/trigger node component
+- `src/components/builder/nodes/ActionNode.tsx` - Generic action/step node component
+- `src/components/builder/nodes/ConditionNode.tsx` - Branching node with multiple outputs
+- `src/components/builder/nodes/index.ts` - Node type registry
+- `src/components/builder/NodeLibrary.tsx` - Floating draggable node palette
 
-**Node types:**
+**Node types (3):**
 
-- **Start Node:** Green accent, "Start" label, single output handle
-- **Default Node:** Cream background, editable label, input + output handles
+1. **Start Node:**
+  - Green accent color
+  - "Start" label (non-editable)
+  - Single output handle (bottom)
+  - No input handle (entry point)
+  - Only one per workflow (validation in later phase)
+2. **Action Node:**
+  - Cream/neutral background
+  - Editable label (default: "Action")
+  - Single input handle (top)
+  - Single output handle (bottom)
+3. **Condition Node:**
+  - Orange/amber accent color
+  - Editable label (default: "Condition")
+  - Single input handle (top)
+  - Multiple output handles (configurable branches)
+  - Default outputs: "Yes" and "No" (can add more via sidebar in Phase 11)
 
 **Node Library panel:**
 
-- Fixed position (top-left of canvas or floating panel)
-- Draggable items: "Start" and "Step"
-- Drag onto canvas to create node
+- Floating panel, vertically centered on the left side of the canvas
+- Semi-transparent background with subtle shadow
+- Contains items: "Start", "Action", "Condition"
+- Each item shows icon + label
+- Two ways to add nodes:
+  1. **Click** - Adds node to the right of the rightmost existing node (or center if empty)
+  2. **Drag** - Drop onto canvas at precise position
+- Panel can be collapsed/minimized (toggle button)
+
+**Implementation details:**
+
+- Register custom node types with React Flow's `nodeTypes` prop
+- Generate unique node IDs with uuid
+
+**Adding nodes - Native HTML5 Drag and Drop (React Flow's recommended approach):**
+
+```tsx
+// Library item - both clickable and draggable
+<div
+  draggable
+  onDragStart={(e) => {
+    e.dataTransfer.setData('application/reactflow', nodeType);
+    e.dataTransfer.effectAllowed = 'move';
+  }}
+  onClick={() => addNodeAtDefaultPosition(nodeType)}
+>
+  {label}
+</div>
+
+// Canvas wrapper
+<div
+  onDragOver={(e) => e.preventDefault()}
+  onDrop={(e) => {
+    const type = e.dataTransfer.getData('application/reactflow');
+    const position = reactFlowInstance.screenToFlowPosition({
+      x: e.clientX,
+      y: e.clientY,
+    });
+    addNode(type, position);
+  }}
+>
+  <ReactFlow ... />
+</div>
+```
+
+- `screenToFlowPosition()` converts screen coords to flow coords (handles pan/zoom)
+- Click-to-add: calculate position as rightmost node x + offset, or viewport center if empty
 
 ---
 
 ## Phase 10: Edges and Connections
 
-**Goal:** Enable edge creation with condition labels.
+**Goal:** Enable edge creation between nodes with labels.
 
 **Files:**
 
-- `src/components/builder/edges/ConditionalEdge.tsx` - Custom edge with label
-- `src/store/workflowStore.ts` - Edge handling
-- `src/components/builder/BuilderCanvas.tsx` - Edge types registration
+- `src/components/builder/edges/DefaultEdge.tsx` - Custom edge with optional label
+- `src/components/builder/BuilderCanvas.tsx` - Edge types registration, connection validation
 
 **Edge features:**
 
 - Arrow marker at target
-- Condition label displayed on edge (default: "condition")
+- Optional label displayed on edge (for condition outputs like "Yes"/"No")
 - Smooth bezier curve
 - Selectable (for deletion)
+- Connection validation: prevent invalid connections (e.g., output to output)
+
+**Connection rules:**
+
+- Start node: can only connect from output
+- Action node: can receive input, can connect output
+- Condition node: can receive input, multiple labeled outputs
 
 ---
 
