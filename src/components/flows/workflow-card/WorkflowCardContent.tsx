@@ -8,6 +8,8 @@ interface WorkflowCardContentProps {
 }
 
 export function WorkflowCardContent({ name, description, searchQuery }: WorkflowCardContentProps) {
+  const hasSearch = searchQuery.trim().length > 0;
+
   return (
     <>
       <h3
@@ -18,12 +20,16 @@ export function WorkflowCardContent({ name, description, searchQuery }: Workflow
           'truncate'
         )}
       >
-        <Highlighter
-          searchWords={[searchQuery]}
-          autoEscape
-          textToHighlight={name}
-          highlightClassName="search-highlight"
-        />
+        {hasSearch ? (
+          <Highlighter
+            searchWords={[searchQuery]}
+            autoEscape
+            textToHighlight={name}
+            highlightClassName="search-highlight"
+          />
+        ) : (
+          name
+        )}
       </h3>
 
       <p
@@ -34,12 +40,16 @@ export function WorkflowCardContent({ name, description, searchQuery }: Workflow
           'line-clamp-2'
         )}
       >
-        <Highlighter
-          searchWords={[searchQuery]}
-          autoEscape
-          textToHighlight={description}
-          highlightClassName="search-highlight"
-        />
+        {hasSearch ? (
+          <Highlighter
+            searchWords={[searchQuery]}
+            autoEscape
+            textToHighlight={description}
+            highlightClassName="search-highlight"
+          />
+        ) : (
+          description
+        )}
       </p>
     </>
   );

@@ -1,22 +1,23 @@
-import cx from 'classnames';
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { DeleteWorkflowDialog } from '@/components/flows/DeleteWorkflowDialog';
+import { EmptyState } from '@/components/flows/EmptyState';
 import { FlowsHeader } from '@/components/flows/FlowsHeader';
 import { FlowsToolbar, SortOption } from '@/components/flows/FlowsToolbar';
-import { WorkflowCard } from '@/components/flows/workflow-card';
 import { WorkflowGrid } from '@/components/flows/WorkflowGrid';
-import { EmptyState } from '@/components/flows/EmptyState';
-import { DeleteWorkflowDialog } from '@/components/flows/DeleteWorkflowDialog';
-import { useWorkflows } from '@/hooks/useWorkflows';
+import { WorkflowCard } from '@/components/flows/workflow-card';
 import { useCreateWorkflow } from '@/hooks/useCreateWorkflow';
 import { useDeleteWorkflow } from '@/hooks/useDeleteWorkflow';
+import { useWorkflows } from '@/hooks/useWorkflows';
 import { IWorkflow } from '@/types/workflow';
+import cx from 'classnames';
+import { Loader2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export function FlowsPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('updatedAt');
+  const [workflowToDelete, setWorkflowToDelete] = useState<IWorkflow | null>(null);
 
   const { workflows, isLoading, isRefetching, refetch } = useWorkflows();
   const { createWorkflow, isCreating } = useCreateWorkflow({
@@ -27,14 +28,9 @@ export function FlowsPage() {
   const { deleteWorkflow, isDeleting } = useDeleteWorkflow({
     onSuccess: () => {
       refetch();
-      setDeleteDialog({ open: false, workflow: null });
+      setWorkflowToDelete(null);
     },
   });
-
-  const [deleteDialog, setDeleteDialog] = useState<{
-    open: boolean;
-    workflow: IWorkflow | null;
-  }>({ open: false, workflow: null });
 
   const filteredWorkflows = useMemo(() => {
     const query = searchQuery.toLowerCase();
@@ -61,13 +57,9 @@ export function FlowsPage() {
     navigate(`/flows/${id}`);
   };
 
-  const handleDeleteClick = (workflow: IWorkflow) => {
-    setDeleteDialog({ open: true, workflow });
-  };
-
   const handleDeleteConfirm = async () => {
-    if (deleteDialog.workflow) {
-      await deleteWorkflow(deleteDialog.workflow.id);
+    if (workflowToDelete) {
+      await deleteWorkflow(workflowToDelete.id);
     }
   };
 
@@ -80,7 +72,7 @@ export function FlowsPage() {
   }
 
   return (
-    <div className={cx('px-6 pt-4 pb-8')}>
+    <div className={cx('max-w-6xl mx-auto', 'px-6 pt-4 pb-8', 'overflow-auto')}>
       <FlowsHeader onCreateClick={handleCreateClick} isCreating={isCreating} />
 
       <div className={cx('flex items-center justify-end gap-3', 'mb-4')}>
@@ -96,7 +88,7 @@ export function FlowsPage() {
       </div>
 
       {sortedWorkflows.length === 0 ? (
-        <EmptyState />
+        <EmptyState variant={workflows.length === 0 ? 'no-workflows' : 'no-results'} />
       ) : (
         <WorkflowGrid>
           {sortedWorkflows.map((workflow) => (
@@ -109,19 +101,21 @@ export function FlowsPage() {
               createdBy={workflow.createdBy}
               searchQuery={searchQuery}
               onClick={() => handleWorkflowClick(workflow.id)}
-              onDelete={() => handleDeleteClick(workflow)}
+              onDelete={() => setWorkflowToDelete(workflow)}
             />
           ))}
         </WorkflowGrid>
       )}
 
-      <DeleteWorkflowDialog
-        open={deleteDialog.open}
-        onOpenChange={(open) => setDeleteDialog({ open, workflow: open ? deleteDialog.workflow : null })}
-        workflowName={deleteDialog.workflow?.name ?? ''}
-        onConfirm={handleDeleteConfirm}
-        isDeleting={isDeleting}
-      />
+      {workflowToDelete && (
+        <DeleteWorkflowDialog
+          open
+          onOpenChange={() => setWorkflowToDelete(null)}
+          workflowName={workflowToDelete.name}
+          onConfirm={handleDeleteConfirm}
+          isDeleting={isDeleting}
+        />
+      )}
     </div>
   );
 }

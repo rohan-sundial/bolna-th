@@ -1,7 +1,13 @@
 import cx from 'classnames';
-import { FolderOpen } from 'lucide-react';
+import { FolderOpen, Search } from 'lucide-react';
 
-export function EmptyState() {
+interface EmptyStateProps {
+  variant?: 'no-workflows' | 'no-results';
+}
+
+export function EmptyState({ variant = 'no-workflows' }: EmptyStateProps) {
+  const isNoResults = variant === 'no-results';
+
   return (
     <div
       className={cx(
@@ -17,13 +23,19 @@ export function EmptyState() {
           'bg-cream-200'
         )}
       >
-        <FolderOpen className={cx('w-8 h-8', 'text-charcoal-700')} />
+        {isNoResults ? (
+          <Search className={cx('w-8 h-8', 'text-charcoal-700')} />
+        ) : (
+          <FolderOpen className={cx('w-8 h-8', 'text-charcoal-700')} />
+        )}
       </div>
       <h3 className={cx('mt-4', 'text-lg font-medium', 'text-charcoal-800')}>
-        No workflows yet
+        {isNoResults ? 'No matching workflows' : 'No workflows yet'}
       </h3>
       <p className={cx('mt-1', 'text-sm', 'text-charcoal-700')}>
-        Create your first workflow to get started
+        {isNoResults
+          ? 'Try a different search term'
+          : 'Create your first workflow to get started'}
       </p>
     </div>
   );

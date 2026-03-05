@@ -22,7 +22,7 @@ todos:
     status: completed
   - id: phase-7
     content: "Phase 7: Builder page shell - Header with inline edit, JSON panel placeholder, layout"
-    status: pending
+    status: in_progress
   - id: phase-8
     content: "Phase 8: React Flow basic canvas - Integration, Zustand store, pan/zoom/drag"
     status: pending
