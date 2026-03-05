@@ -16,7 +16,7 @@ export function FlowsToolbar({
   onSortChange,
 }: FlowsToolbarProps) {
   return (
-    <div className={cx('flex items-center justify-end gap-3', 'mb-4')}>
+    <div className={cx('flex items-center justify-end gap-3')}>
       <SearchInput
         value={searchQuery}
         onChange={onSearchChange}

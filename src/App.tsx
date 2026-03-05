@@ -4,6 +4,7 @@ import {
   Navigate,
   RouterProvider,
 } from "react-router-dom";
+import { Toaster } from "@/components/ui/sonner";
 import { RootLayout } from "./components/layout/RootLayout";
 import { AuthProvider, useAuthContext } from "./context/AuthContext";
 import { BuilderPage } from "./pages/BuilderPage";
@@ -81,9 +82,12 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+      <Toaster position="bottom-right" />
+    </>
   );
 }
 

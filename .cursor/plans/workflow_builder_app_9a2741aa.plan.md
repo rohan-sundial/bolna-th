@@ -19,7 +19,7 @@ todos:
     status: completed
   - id: phase-6
     content: "Phase 6: LocalStorage service and CRUD - Storage abstraction, create/delete wiring"
-    status: pending
+    status: completed
   - id: phase-7
     content: "Phase 7: Builder page shell - Header with inline edit, JSON panel placeholder, layout"
     status: pending
@@ -449,40 +449,394 @@ interface IAuthState {
 
 ---
 
-## Phase 6: LocalStorage Service and Workflow CRUD
+## Phase 6: Workflow Service and CRUD
 
-**Goal:** Implement localStorage abstraction and wire up create/delete.
+**Goal:** Implement a service abstraction for workflow persistence with localStorage implementation, wire up create/delete.
+
+**Architecture:**
+
+The service layer uses dependency inversion - we define an interface (contract) and provide a localStorage implementation. This allows swapping to an API-based implementation later without changing consuming code.
+
+```
+┌─────────────────────────────────────────┐
+│  Components / Hooks                     │
+│  (import workflowService directly)      │
+└─────────────────┬───────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────┐
+│  IWorkflowService (interface/type)      │
+│  - All methods return Promises          │
+│  - Defines the contract                 │
+└─────────────────┬───────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────┐
+│  localStorageWorkflowService            │
+│  (current implementation)               │
+│  - Implements the interface             │
+│  - Uses localStorage under the hood     │
+│  - Returns Promises (for API compat)    │
+└─────────────────────────────────────────┘
+```
 
 **Files:**
 
-- `src/lib/storage.ts` - localStorage service
-- `src/types/workflow.ts` - Type definitions
-- `src/pages/FlowsPage.tsx` - Wire up CRUD
-- `src/components/flows/WorkflowCard.tsx` - Wire delete
+- `src/types/workflow.ts` - Update with service types
+- `src/services/workflowService.ts` - Interface + localStorage implementation
+- `src/hooks/useWorkflows.ts` - Hook for fetching/listing workflows
+- `src/hooks/useCreateWorkflow.ts` - Hook for creating a workflow
+- `src/hooks/useUpdateWorkflow.ts` - Hook for updating a workflow
+- `src/hooks/useDeleteWorkflow.ts` - Hook for deleting a workflow
+- `src/pages/FlowsPage.tsx` - Wire up CRUD using the hooks
+- `src/components/flows/DeleteWorkflowDialog.tsx` - Confirmation modal for delete
+- `src/App.tsx` - Add Toaster provider
 
-**Storage service API:**
+**Dependencies to add:**
+
+```bash
+npx shadcn@latest add sonner alert-dialog
+```
+
+**Service interface (type, not class):**
 
 ```typescript
-// src/lib/storage.ts
+// src/types/workflow.ts
+
+// Input type for updating a workflow
+type UpdateWorkflowInput = Partial<Pick<IWorkflow, 'name' | 'description'>>;
+
+// Service interface - all methods return Promises
+type IWorkflowService = {
+  getAll: () => Promise<IWorkflow[]>;
+  getById: (id: string) => Promise<IWorkflow | null>;
+  create: () => Promise<IWorkflow>;  // Creates with defaults
+  update: (id: string, input: UpdateWorkflowInput) => Promise<IWorkflow>;
+  delete: (id: string) => Promise<void>;
+};
+```
+
+**localStorage implementation (functional, not class):**
+
+```typescript
+// src/services/workflowService.ts
+import { v4 as uuidv4 } from 'uuid';
+
 const STORAGE_KEY = 'flowbuilder_workflows';
 
-export const workflowStorage = {
-  getAll(): Workflow[];
-  getById(id: string): Workflow | null;
-  create(workflow: Workflow): void;
-  update(workflow: Workflow): void;
-  delete(id: string): void;
+// Helper to get current user (from auth context or mock)
+const getCurrentUser = () => 'Rohan'; // TODO: wire to auth
+
+export const workflowService: IWorkflowService = {
+  getAll: async () => {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return [];
+    const workflows = JSON.parse(data) as IWorkflow[];
+    // Parse date strings back to Date objects
+    return workflows.map(w => ({
+      ...w,
+      createdAt: new Date(w.createdAt),
+      updatedAt: new Date(w.updatedAt),
+    }));
+  },
+
+  getById: async (id) => {
+    const workflows = await workflowService.getAll();
+    return workflows.find(w => w.id === id) ?? null;
+  },
+
+  create: async () => {
+    const workflows = await workflowService.getAll();
+    const now = new Date();
+    const newWorkflow: IWorkflow = {
+      id: uuidv4(),
+      name: 'Untitled Workflow',
+      description: '',
+      createdAt: now,
+      updatedAt: now,
+      createdBy: getCurrentUser(),
+    };
+    workflows.push(newWorkflow);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(workflows));
+    return newWorkflow;
+  },
+
+  update: async (id, input) => {
+    const workflows = await workflowService.getAll();
+    const index = workflows.findIndex(w => w.id === id);
+    if (index === -1) throw new Error(`Workflow ${id} not found`);
+
+    const updated: IWorkflow = {
+      ...workflows[index],
+      ...input,
+      updatedAt: new Date(),
+    };
+    workflows[index] = updated;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(workflows));
+    return updated;
+  },
+
+  delete: async (id) => {
+    const workflows = await workflowService.getAll();
+    const filtered = workflows.filter(w => w.id !== id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  },
 };
+```
+
+**Hooks (separate concerns):**
+
+Each hook is explicit about what it does. Mutation hooks accept an `onSuccess` callback for coordinating list updates.
+
+```typescript
+// src/hooks/useWorkflows.ts - Fetching/listing only
+import { useState, useEffect, useCallback } from 'react';
+import { workflowService } from '@/services/workflowService';
+import { IWorkflow } from '@/types/workflow';
+
+export function useWorkflows() {
+  const [workflows, setWorkflows] = useState<IWorkflow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchWorkflows = useCallback(async () => {
+    try {
+      setError(null);
+      setIsLoading(true);
+      const data = await workflowService.getAll();
+      setWorkflows(data);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch workflows'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchWorkflows();
+  }, [fetchWorkflows]);
+
+  return {
+    workflows,
+    isLoading,
+    error,
+    refetch: fetchWorkflows,
+  };
+}
+```
+
+```typescript
+// src/hooks/useCreateWorkflow.ts
+import { useState, useCallback } from 'react';
+import { workflowService } from '@/services/workflowService';
+import { IWorkflow } from '@/types/workflow';
+import { toast } from 'sonner';
+
+interface UseCreateWorkflowOptions {
+  onSuccess?: (workflow: IWorkflow) => void;
+}
+
+export function useCreateWorkflow(options?: UseCreateWorkflowOptions) {
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const createWorkflow = useCallback(async () => {
+    try {
+      setError(null);
+      setIsCreating(true);
+      const newWorkflow = await workflowService.create();
+      toast.success('Workflow created');
+      options?.onSuccess?.(newWorkflow);
+      return newWorkflow;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to create workflow');
+      setError(error);
+      toast.error(error.message);
+      throw error;
+    } finally {
+      setIsCreating(false);
+    }
+  }, [options]);
+
+  return { createWorkflow, isCreating, error };
+}
+```
+
+```typescript
+// src/hooks/useUpdateWorkflow.ts
+import { useState, useCallback } from 'react';
+import { workflowService } from '@/services/workflowService';
+import { IWorkflow, UpdateWorkflowInput } from '@/types/workflow';
+import { toast } from 'sonner';
+
+interface UseUpdateWorkflowOptions {
+  onSuccess?: (workflow: IWorkflow) => void;
+}
+
+export function useUpdateWorkflow(options?: UseUpdateWorkflowOptions) {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const updateWorkflow = useCallback(async (id: string, input: UpdateWorkflowInput) => {
+    try {
+      setError(null);
+      setIsUpdating(true);
+      const updated = await workflowService.update(id, input);
+      toast.success('Workflow updated');
+      options?.onSuccess?.(updated);
+      return updated;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to update workflow');
+      setError(error);
+      toast.error(error.message);
+      throw error;
+    } finally {
+      setIsUpdating(false);
+    }
+  }, [options]);
+
+  return { updateWorkflow, isUpdating, error };
+}
+```
+
+```typescript
+// src/hooks/useDeleteWorkflow.ts
+import { useState, useCallback } from 'react';
+import { workflowService } from '@/services/workflowService';
+import { toast } from 'sonner';
+
+interface UseDeleteWorkflowOptions {
+  onSuccess?: (id: string) => void;
+}
+
+export function useDeleteWorkflow(options?: UseDeleteWorkflowOptions) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const deleteWorkflow = useCallback(async (id: string) => {
+    try {
+      setError(null);
+      setIsDeleting(true);
+      await workflowService.delete(id);
+      toast.success('Workflow deleted');
+      options?.onSuccess?.(id);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to delete workflow');
+      setError(error);
+      toast.error(error.message);
+      throw error;
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [options]);
+
+  return { deleteWorkflow, isDeleting, error };
+}
+```
+
+**Usage in FlowsPage:**
+
+```typescript
+// src/pages/FlowsPage.tsx
+export function FlowsPage() {
+  const { workflows, isLoading, refetch } = useWorkflows();
+  const { createWorkflow, isCreating } = useCreateWorkflow({ onSuccess: refetch });
+  const { deleteWorkflow, isDeleting } = useDeleteWorkflow({ onSuccess: refetch });
+
+  // ...
+}
 ```
 
 **Create flow:**
 
-1. Generate UUID for new workflow
-2. Create with default name "Untitled Workflow"
-3. Empty nodes/edges arrays
-4. Set createdAt, updatedAt, createdBy from auth
-5. Save to localStorage
-6. Navigate to `/flows/[id]`
+1. User clicks "+ Create" button
+2. Call `createWorkflow()` - service uses defaults ('Untitled Workflow', '')
+3. Service generates UUID, timestamps, adds createdBy
+4. Save to localStorage
+5. Navigate to `/flows/[id]` with returned workflow ID
+
+**Delete flow:**
+
+1. User hovers card, clicks delete button
+2. Show confirmation dialog (AlertDialog from shadcn)
+3. User confirms → call `deleteWorkflow(id)`
+4. Service removes from localStorage
+5. UI updates via state
+6. Toast shows "Workflow deleted"
+
+**Delete confirmation dialog:**
+
+```typescript
+// src/components/flows/DeleteWorkflowDialog.tsx
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+interface DeleteWorkflowDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  workflowName: string;
+  onConfirm: () => void;
+}
+
+export function DeleteWorkflowDialog({
+  open,
+  onOpenChange,
+  workflowName,
+  onConfirm,
+}: DeleteWorkflowDialogProps) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete workflow?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete "{workflowName}"? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+```
+
+**Toast setup:**
+
+```typescript
+// src/App.tsx - Add Toaster to the app
+import { Toaster } from '@/components/ui/sonner';
+
+function App() {
+  return (
+    <>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+      <Toaster position="bottom-right" />
+    </>
+  );
+}
+```
+
+**Why Promises for localStorage?**
+
+Even though localStorage is synchronous, we return Promises because:
+
+- Maintains consistent async interface
+- Allows easy swap to API implementation later
+- Components already handle loading/error states
+- No refactoring needed when backend is added
 
 ---
 

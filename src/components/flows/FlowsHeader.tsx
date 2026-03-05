@@ -1,12 +1,13 @@
 import cx from 'classnames';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface FlowsHeaderProps {
   onCreateClick: () => void;
+  isCreating?: boolean;
 }
 
-export function FlowsHeader({ onCreateClick }: FlowsHeaderProps) {
+export function FlowsHeader({ onCreateClick, isCreating }: FlowsHeaderProps) {
   return (
     <div className={cx('flex flex-col items-center', 'pt-6 pb-10')}>
       <h1 className={cx('text-xl font-semibold', 'text-charcoal-800')}>
@@ -19,6 +20,7 @@ export function FlowsHeader({ onCreateClick }: FlowsHeaderProps) {
         variant="outline"
         size="sm"
         onClick={onCreateClick}
+        disabled={isCreating}
         className={cx(
           'mt-4',
           'rounded-full',
@@ -28,8 +30,12 @@ export function FlowsHeader({ onCreateClick }: FlowsHeaderProps) {
           'hover:bg-terracotta-500/20 hover:text-terracotta-700'
         )}
       >
-        <Plus className="w-4 h-4" />
-        Create
+        {isCreating ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Plus className="w-4 h-4" />
+        )}
+        {isCreating ? 'Creating...' : 'Create'}
       </Button>
     </div>
   );
