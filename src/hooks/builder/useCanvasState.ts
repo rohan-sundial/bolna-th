@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   Node,
   Edge,
@@ -22,6 +22,13 @@ export function useCanvasState({ workflow, workflowId, onSave }: UseCanvasStateO
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [editingNode, setEditingNode] = useState<Node | null>(null);
+
+  // Close sidebar if editing node no longer exists (e.g., deleted via multi-select)
+  useEffect(() => {
+    if (editingNode && !nodes.find((n) => n.id === editingNode.id)) {
+      setEditingNode(null);
+    }
+  }, [nodes, editingNode]);
 
   const openNodeForEditing = useCallback((node: Node) => {
     // Always look up fresh node from nodes array to ensure latest data

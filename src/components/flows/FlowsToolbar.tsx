@@ -1,6 +1,7 @@
 import cx from 'classnames';
 import { SearchInput } from './SearchInput';
-import { SortDropdown, SortOption } from './SortDropdown';
+import { SortDropdown } from './SortDropdown';
+import { SortOption } from '@/types/workflow';
 
 interface FlowsToolbarProps {
   searchQuery: string;
@@ -26,5 +27,3 @@ export function FlowsToolbar({
     </div>
   );
 }
-
-export type { SortOption };

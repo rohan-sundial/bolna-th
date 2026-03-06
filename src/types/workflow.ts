@@ -1,5 +1,7 @@
 import type { Node, Edge } from '@xyflow/react';
 
+export type SortOption = 'updatedAt' | 'createdAt';
+
 export interface IWorkflow {
   id: string;
   name: string;

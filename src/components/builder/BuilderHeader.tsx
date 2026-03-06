@@ -1,34 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
 import cx from 'classnames';
-import { Link } from 'react-router-dom';
-import { ChevronRight, Loader2, Check, MoreHorizontal } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { InlineEdit } from '@/components/ui/InlineEdit';
+import type { Node, Edge } from '@xyflow/react';
+import { BuilderHeaderLeft } from './BuilderHeaderLeft';
+import { BuilderHeaderRight } from './BuilderHeaderRight';
 
 interface BuilderHeaderProps {
   name: string;
+  description: string;
   onNameChange: (name: string) => void;
-  onDescriptionEdit: () => void;
+  onDescriptionSave: (description: string) => Promise<void>;
   onDuplicate: () => void;
   onDelete: () => void;
-  onImportJSON: () => void;
+  onImport: (data: { nodes: Node[]; edges: Edge[]; name: string; description: string }) => void;
   isSaving?: boolean;
+  isDeleting?: boolean;
 }
 
 export function BuilderHeader({
   name,
+  description,
   onNameChange,
-  onDescriptionEdit,
+  onDescriptionSave,
   onDuplicate,
   onDelete,
-  onImportJSON,
+  onImport,
   isSaving,
+  isDeleting,
 }: BuilderHeaderProps) {
   const [showSaved, setShowSaved] = useState(false);
   const prevSavingRef = useRef(isSaving);
@@ -42,8 +39,6 @@ export function BuilderHeader({
     prevSavingRef.current = isSaving;
   }, [isSaving]);
 
-  const menuItemClass = cx('text-xs', 'opacity-80');
-
   return (
     <header
       className={cx(
@@ -53,66 +48,22 @@ export function BuilderHeader({
         'bg-cream-50'
       )}
     >
-      <nav className={cx('flex items-center gap-1', 'text-sm')}>
-        <Link
-          to="/flows"
-          className={cx(
-            'text-charcoal-600',
-            'hover:text-charcoal-800 hover:underline',
-            'transition-colors'
-          )}
-        >
-          Workflows
-        </Link>
-        <ChevronRight className={cx('w-4 h-4', 'text-charcoal-400')} />
-        <InlineEdit
-          value={name}
-          onSave={onNameChange}
-          placeholder="Untitled Workflow"
-          className="font-medium text-charcoal-800"
-          inputClassName="font-medium"
-        />
-        {isSaving && (
-          <Loader2 className={cx('ml-2 w-4 h-4', 'text-charcoal-500', 'animate-spin')} />
-        )}
-        {!isSaving && showSaved && (
-          <Check
-            className={cx(
-              'ml-2 w-4 h-4',
-              'text-green-600',
-              'animate-in fade-in duration-200'
-            )}
-          />
-        )}
-      </nav>
+      <BuilderHeaderLeft
+        name={name}
+        onNameChange={onNameChange}
+        isSaving={isSaving}
+        showSaved={showSaved}
+      />
 
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className={cx(
-            'p-2 rounded-md',
-            'text-charcoal-600',
-            'hover:bg-cream-200 hover:text-charcoal-800',
-            'transition-colors'
-          )}
-        >
-          <MoreHorizontal className="w-4 h-4" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onDescriptionEdit} className={menuItemClass}>
-            Edit Description
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onImportJSON} className={menuItemClass}>
-            Import JSON
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onDuplicate} className={menuItemClass}>
-            Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onDelete} variant="destructive" className={menuItemClass}>
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <BuilderHeaderRight
+        name={name}
+        description={description}
+        onDescriptionSave={onDescriptionSave}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        onImport={onImport}
+        isDeleting={isDeleting}
+      />
     </header>
   );
 }

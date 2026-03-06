@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Position, NodeProps } from '@xyflow/react';
 import { Play } from 'lucide-react';
 import { NodeWrapper, NodeHeader, NodeHandle } from './common';
-import { useNodeErrors, useValidationContext } from '@/contexts/ValidationContext';
+import { useNodeErrors, useValidationContext } from '@/contexts/useValidation';
 
 export const StartNode = memo(function StartNode({ id, selected }: NodeProps) {
   const errors = useNodeErrors(id);

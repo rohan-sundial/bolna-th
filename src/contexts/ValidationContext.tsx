@@ -1,14 +1,6 @@
-import { createContext, useContext, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import type { ValidationError } from '@/lib/validation';
-
-interface ValidationContextValue {
-  errorsByNodeId: Map<string, ValidationError[]>;
-  onNodeErrorClick?: (nodeId: string) => void;
-}
-
-const ValidationContext = createContext<ValidationContextValue>({
-  errorsByNodeId: new Map(),
-});
+import { ValidationContext } from './validationContextDef';
 
 interface ValidationProviderProps {
   children: ReactNode;
@@ -26,13 +18,4 @@ export function ValidationProvider({
       {children}
     </ValidationContext.Provider>
   );
-}
-
-export function useValidationContext() {
-  return useContext(ValidationContext);
-}
-
-export function useNodeErrors(nodeId: string): ValidationError[] {
-  const { errorsByNodeId } = useValidationContext();
-  return errorsByNodeId.get(nodeId) || [];
 }

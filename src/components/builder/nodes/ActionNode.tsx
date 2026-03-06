@@ -2,7 +2,7 @@ import { memo } from "react";
 import { Position, NodeProps } from "@xyflow/react";
 import { Zap } from "lucide-react";
 import { NodeWrapper, NodeHeader, NodeHandle } from "./common";
-import { useNodeErrors, useValidationContext } from "@/contexts/ValidationContext";
+import { useNodeErrors, useValidationContext } from "@/contexts/useValidation";
 
 export const ActionNode = memo(function ActionNode({
   id,

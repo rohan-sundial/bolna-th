@@ -1,9 +1,16 @@
-import { useEffect } from 'react';
+import { useCallback } from 'react';
+import { useParams } from 'react-router-dom';
+import type { Node, Edge } from '@xyflow/react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import { useWorkflowActions } from './useWorkflowActions';
 import { useCanvasState } from './useCanvasState';
-import { useBuilderDialogs } from './useBuilderDialogs';
+import { useValidation } from './useValidation';
+import { useAutoLayout } from './useAutoLayout';
+import { useNodeFocus } from './useNodeFocus';
 
-export function useBuilderPageConfig(workflowId: string | undefined) {
+export function useBuilderPageConfig() {
+  const { id: workflowId } = useParams<{ id: string }>();
+
   const {
     workflow,
     isLoading,
@@ -39,39 +46,75 @@ export function useBuilderPageConfig(workflowId: string | undefined) {
     onSave: updateWorkflow,
   });
 
-  const {
-    descriptionDialogOpen,
-    setDescriptionDialogOpen,
-    deleteDialogOpen,
-    setDeleteDialogOpen,
-  } = useBuilderDialogs();
+  const validation = useValidation(nodes, edges);
+  const { getLayoutedElements } = useAutoLayout();
 
-  // Document title
-  useEffect(() => {
-    if (workflow?.name) {
-      document.title = `${workflow.name} | Workflow Builder`;
-    }
-    return () => {
-      document.title = 'Workflow Builder';
-    };
-  }, [workflow?.name]);
+  const {
+    focusNodeId,
+    fitViewTrigger,
+    handleValidationErrorClick,
+    triggerFitView,
+  } = useNodeFocus({
+    nodes,
+    setNodes,
+    openNodeForEditing,
+  });
+
+  usePageTitle(workflow?.name);
+
+  // Handle JSON import
+  const handleImport = useCallback(
+    (data: {
+      nodes: Node[];
+      edges: Edge[];
+      name: string;
+      description: string;
+    }) => {
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+        data.nodes,
+        data.edges
+      );
+
+      closeNodeEditor();
+      handleNameChange(data.name);
+      handleDescriptionSave(data.description);
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
+      triggerFitView();
+    },
+    [
+      getLayoutedElements,
+      closeNodeEditor,
+      handleNameChange,
+      handleDescriptionSave,
+      setNodes,
+      setEdges,
+      triggerFitView,
+    ]
+  );
 
   return {
-    // Workflow state
-    workflow,
+    // Loading & error state
     isLoading,
     error,
+    workflow,
+
+    // Saving & deleting state
     isUpdating,
     isDeleting,
 
-    // Canvas
+    // Canvas state
     nodes,
     edges,
     setNodes,
-    setEdges,
     onNodesChange,
     onEdgesChange,
     onConnect,
+    setEdges,
+    focusNodeId,
+    fitViewTrigger,
+
+    // Node editing
     editingNode,
     openNodeForEditing,
     closeNodeEditor,
@@ -81,16 +124,16 @@ export function useBuilderPageConfig(workflowId: string | undefined) {
     deleteEdge,
     addEdgeFromSidebar,
 
-    // Actions
+    // Validation
+    validationErrors: validation.errors,
+    errorsByNodeId: validation.errorsByNodeId,
+    handleValidationErrorClick,
+
+    // Workflow actions
     handleNameChange,
     handleDescriptionSave,
     handleDuplicate,
     handleDelete,
-
-    // Dialogs
-    descriptionDialogOpen,
-    setDescriptionDialogOpen,
-    deleteDialogOpen,
-    setDeleteDialogOpen,
+    handleImport,
   };
 }

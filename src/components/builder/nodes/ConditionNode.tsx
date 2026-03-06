@@ -3,7 +3,7 @@ import { Handle, Position, NodeProps } from '@xyflow/react';
 import cx from 'classnames';
 import { GitBranch } from 'lucide-react';
 import { NodeWrapper, NodeHeader, NodeHandle } from './common';
-import { useNodeErrors, useValidationContext } from '@/contexts/ValidationContext';
+import { useNodeErrors, useValidationContext } from '@/contexts/useValidation';
 
 export const ConditionNode = memo(function ConditionNode({
   id,

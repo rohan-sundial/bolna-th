@@ -6,8 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-export type SortOption = 'updatedAt' | 'createdAt';
+import { SortOption } from '@/types/workflow';
 
 interface SortDropdownProps {
   value: SortOption;

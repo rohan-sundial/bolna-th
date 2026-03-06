@@ -101,6 +101,15 @@ export function validateWorkflow(nodes: Node[], edges: Edge[]): ValidationResult
     }
 
     if (node.type === 'action') {
+      if (!data.label || data.label.trim() === '') {
+        errors.push({
+          id: generateErrorId('action-no-name', node.id),
+          nodeId: node.id,
+          message: `[${nodeType}][${nodeName}]: missing name`,
+          field: 'label',
+        });
+      }
+
       if (!data.prompt || data.prompt.trim() === '' || data.prompt === '<p></p>') {
         errors.push({
           id: generateErrorId('action-no-prompt', node.id),
@@ -109,7 +118,6 @@ export function validateWorkflow(nodes: Node[], edges: Edge[]): ValidationResult
           field: 'prompt',
         });
       }
-
 
       if (nodeIncoming.length === 0) {
         errors.push({
@@ -121,6 +129,15 @@ export function validateWorkflow(nodes: Node[], edges: Edge[]): ValidationResult
     }
 
     if (node.type === 'condition') {
+      if (!data.label || data.label.trim() === '') {
+        errors.push({
+          id: generateErrorId('condition-no-name', node.id),
+          nodeId: node.id,
+          message: `[${nodeType}][${nodeName}]: missing name`,
+          field: 'label',
+        });
+      }
+
       if (!data.prompt || data.prompt.trim() === '' || data.prompt === '<p></p>') {
         errors.push({
           id: generateErrorId('condition-no-prompt', node.id),
@@ -129,7 +146,6 @@ export function validateWorkflow(nodes: Node[], edges: Edge[]): ValidationResult
           field: 'prompt',
         });
       }
-
 
       if (nodeIncoming.length === 0) {
         errors.push({
