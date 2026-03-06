@@ -1,17 +1,16 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { Node, Edge } from '@xyflow/react';
 import cx from 'classnames';
-import { X, Trash2, Play, Zap, GitBranch, Plus } from 'lucide-react';
+import { X, Trash2, Play, Zap, GitBranch, Plus, Copy, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { TiptapEditor } from '@/components/ui/TiptapEditor';
+import { ExpandableTextModal } from '@/components/ui/ExpandableTextModal';
 import { DeleteNodeDialog } from './DeleteNodeDialog';
 import { useNodeErrors } from '@/contexts/ValidationContext';
 
@@ -22,14 +21,10 @@ interface NodeData {
   branches?: string[];
 }
 
-interface EdgeData {
-  label?: string;
-}
-
-const nodeConfig: Record<string, { icon: React.ElementType; label: string; color: string }> = {
-  start: { icon: Play, label: 'Start', color: 'text-green-600' },
-  action: { icon: Zap, label: 'Action', color: 'text-clay-600' },
-  condition: { icon: GitBranch, label: 'Condition', color: 'text-amber-600' },
+const nodeConfig: Record<string, { icon: React.ElementType; label: string; colorScheme: 'green' | 'clay' | 'amber'; bgColor: string; textColor: string; iconFill: string }> = {
+  start: { icon: Play, label: 'Start', colorScheme: 'green', bgColor: 'bg-green-500', textColor: 'text-green-700', iconFill: 'white' },
+  action: { icon: Zap, label: 'Action', colorScheme: 'clay', bgColor: 'bg-clay-500', textColor: 'text-clay-700', iconFill: 'white' },
+  condition: { icon: GitBranch, label: 'Condition', colorScheme: 'amber', bgColor: 'bg-amber-500', textColor: 'text-amber-700', iconFill: 'none' },
 };
 
 interface NodeSidebarProps {
@@ -41,6 +36,106 @@ interface NodeSidebarProps {
   onUpdateData: (nodeId: string, data: Record<string, unknown>) => void;
   onDeleteEdge: (edgeId: string) => void;
   onAddEdge: (sourceId: string, targetId: string, sourceHandle?: string) => void;
+}
+
+interface SectionProps {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+function Section({ label, children, className }: SectionProps) {
+  return (
+    <div className={cx('space-y-1.5', className)}>
+      <label className={cx('text-[10px] font-medium uppercase tracking-wide', 'text-charcoal-400')}>
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+interface NodeChipProps {
+  nodeId: string;
+  nodes: Node[];
+  onDelete?: () => void;
+}
+
+function NodeChip({ nodeId, nodes, onDelete }: NodeChipProps) {
+  const node = nodes.find((n) => n.id === nodeId);
+  if (!node) return <span className="text-xs text-charcoal-400">{nodeId}</span>;
+  
+  const nodeData = node.data as NodeData;
+  const config = nodeConfig[node.type || 'action'] || nodeConfig.action;
+  const Icon = config.icon;
+  const label = nodeData.label || config.label;
+
+  return (
+    <span
+      className={cx(
+        'group inline-flex items-center gap-1.5 px-2 py-1 rounded-md',
+        'bg-white border border-cream-300',
+        'text-xs font-medium'
+      )}
+    >
+      <span className={cx('p-0.5 rounded', config.bgColor)}>
+        <Icon className="w-2.5 h-2.5 text-white" fill={config.iconFill} />
+      </span>
+      <span className={cx(config.textColor, 'truncate max-w-[100px]')}>{label}</span>
+      {onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className={cx(
+            'p-0.5 -mr-1 rounded',
+            'text-charcoal-300 hover:text-red-500',
+            'opacity-0 group-hover:opacity-100',
+            'transition-all'
+          )}
+        >
+          <X className="w-3 h-3" />
+        </button>
+      )}
+    </span>
+  );
+}
+
+function AddLink({ onSelect, options, placeholder = 'Add' }: { 
+  onSelect: (value: string) => void; 
+  options: { id: string; label: string }[];
+  placeholder?: string;
+}) {
+  if (options.length === 0) return null;
+  
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className={cx(
+            'inline-flex items-center gap-0.5 px-1 py-0.5 text-xs',
+            'text-charcoal-500 hover:text-charcoal-700 hover:bg-cream-300/50',
+            'rounded transition-colors'
+          )}
+        >
+          <Plus className="w-3 h-3" />
+          {placeholder}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        {options.map((opt) => (
+          <DropdownMenuItem 
+            key={opt.id} 
+            className="text-xs cursor-pointer"
+            onSelect={() => onSelect(opt.id)}
+          >
+            {opt.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 export function NodeSidebar({
@@ -58,11 +153,8 @@ export function NodeSidebar({
   const Icon = config.icon;
   const data = node.data as NodeData;
   const errors = useNodeErrors(node.id);
+  const [copied, setCopied] = useState(false);
 
-  const hasDescriptionError = useMemo(
-    () => errors.some((e) => e.field === 'description'),
-    [errors]
-  );
   const hasPromptError = useMemo(
     () => errors.some((e) => e.field === 'prompt'),
     [errors]
@@ -88,31 +180,25 @@ export function NodeSidebar({
     [nodes]
   );
 
-  // Available sources for incoming connections (nodes that can connect TO this node)
   const availableSources = useMemo(() => {
     return nodes.filter((n) => {
       if (n.id === node.id) return false;
       if (n.type === 'start') {
-        // Start can connect if it doesn't already have an outgoing edge
         const hasOutgoing = edges.some((e) => e.source === n.id);
         return !hasOutgoing;
       }
-      // For other nodes, check if they can still connect
       if (n.type === 'condition') {
-        // Condition nodes can have multiple outputs
         const nodeData = n.data as NodeData;
         const branches = nodeData.branches || ['Yes', 'No'];
         const usedHandles = edges.filter((e) => e.source === n.id).map((e) => e.sourceHandle);
         return branches.some((_, i) => !usedHandles.includes(`branch-${i}`));
       } else {
-        // Non-condition nodes can only have one outgoing
         const hasOutgoing = edges.some((e) => e.source === n.id);
         return !hasOutgoing;
       }
     });
   }, [nodes, edges, node.id]);
 
-  // Available targets for outgoing connections
   const availableTargets = useMemo(() => {
     return nodes.filter((n) => {
       if (n.id === node.id) return false;
@@ -121,7 +207,6 @@ export function NodeSidebar({
     });
   }, [nodes, node.id]);
 
-  // For condition nodes, get available branches
   const availableBranches = useMemo(() => {
     if (nodeType !== 'condition') return [];
     const branches = data.branches || ['Yes', 'No'];
@@ -131,13 +216,18 @@ export function NodeSidebar({
       .filter((b) => !usedHandles.has(b.handleId));
   }, [nodeType, data.branches, outgoingEdges]);
 
-  // Can add outgoing connection?
   const canAddOutgoing = useMemo(() => {
     if (nodeType === 'condition') {
       return availableBranches.length > 0 && availableTargets.length > 0;
     }
     return outgoingEdges.length === 0 && availableTargets.length > 0;
   }, [nodeType, availableBranches, availableTargets, outgoingEdges]);
+
+  const handleCopyId = useCallback(async () => {
+    await navigator.clipboard.writeText(node.id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }, [node.id]);
 
   const handleAddIncoming = useCallback(
     (sourceId: string) => {
@@ -146,7 +236,6 @@ export function NodeSidebar({
 
       let sourceHandle: string | undefined;
       if (sourceNode.type === 'condition') {
-        // Find first available branch
         const nodeData = sourceNode.data as NodeData;
         const branches = nodeData.branches || ['Yes', 'No'];
         const usedHandles = edges.filter((e) => e.source === sourceId).map((e) => e.sourceHandle);
@@ -168,7 +257,6 @@ export function NodeSidebar({
     [node.id, onAddEdge]
   );
 
-  // Get branch name from sourceHandle for condition nodes
   const getBranchNameForNode = useCallback(
     (sourceNodeId: string, sourceHandle: string | null | undefined) => {
       if (!sourceHandle) return null;
@@ -176,7 +264,6 @@ export function NodeSidebar({
       if (!match) return null;
       const index = parseInt(match[1], 10);
       
-      // Get the source node's branches
       const sourceNode = nodes.find((n) => n.id === sourceNodeId);
       if (!sourceNode || sourceNode.type !== 'condition') return null;
       
@@ -185,19 +272,6 @@ export function NodeSidebar({
       return branches[index] || null;
     },
     [nodes]
-  );
-  
-  // Get branch name for current condition node's outgoing edges
-  const getBranchName = useCallback(
-    (sourceHandle: string | null | undefined) => {
-      if (!sourceHandle) return null;
-      const match = sourceHandle.match(/^branch-(\d+)$/);
-      if (!match) return null;
-      const index = parseInt(match[1], 10);
-      const branches = data.branches || ['Yes', 'No'];
-      return branches[index] || null;
-    },
-    [data.branches]
   );
 
   const handleNameChange = useCallback(
@@ -208,7 +282,7 @@ export function NodeSidebar({
   );
 
   const handleDescriptionChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       onUpdateData(node.id, { description: e.target.value });
     },
     [node.id, onUpdateData]
@@ -256,6 +330,18 @@ export function NodeSidebar({
     onClose();
   }, [node.id, onDelete, onClose]);
 
+  const sourceOptions = useMemo(
+    () => availableSources.map((n) => ({ id: n.id, label: getNodeName(n.id) })),
+    [availableSources, getNodeName]
+  );
+
+  const targetOptions = useMemo(
+    () => availableTargets.map((n) => ({ id: n.id, label: getNodeName(n.id) })),
+    [availableTargets, getNodeName]
+  );
+
+  const showIncomingAdd = incomingEdges.length === 0 && sourceOptions.length > 0;
+
   return (
     <>
     <DeleteNodeDialog
@@ -267,317 +353,263 @@ export function NodeSidebar({
     <div
       className={cx(
         'absolute right-3 top-3 bottom-3 z-20',
-        'w-72',
+        'w-80',
         'bg-cream-200/90 backdrop-blur-sm',
         'rounded-xl',
         'shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)]',
         'border border-cream-300/50',
         'flex flex-col',
-        'overflow-hidden'
+        'overflow-hidden',
+        'text-xs'
       )}
     >
       {/* Header */}
       <div
         className={cx(
-          'flex items-center gap-2 px-4 py-3',
+          'flex items-center gap-2 px-3 py-2',
           'border-b border-cream-300/50'
         )}
       >
-        <Icon className={cx('w-4 h-4', config.color)} />
-        <span className={cx('flex-1 text-sm font-medium', 'text-charcoal-700')}>
+        <span className={cx('p-1 rounded', config.bgColor)}>
+          <Icon className="w-3 h-3 text-white" fill={config.iconFill} />
+        </span>
+        <span className={cx('flex-1 text-xs font-medium', config.textColor)}>
           {config.label}
         </span>
         <button
           onClick={handleDeleteClick}
           className={cx(
-            'p-1.5 rounded-lg',
+            'p-1 rounded-lg',
             'text-charcoal-400 hover:text-red-500',
             'hover:bg-cream-300/70',
             'transition-colors'
           )}
           title="Delete node"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={onClose}
           className={cx(
-            'p-1.5 rounded-lg',
+            'p-1 rounded-lg',
             'text-charcoal-400 hover:text-charcoal-600',
             'hover:bg-cream-300/70',
             'transition-colors'
           )}
           title="Close"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5" />
         </button>
       </div>
 
       {/* Content */}
-      <div className={cx('flex-1 overflow-y-auto', 'p-4 space-y-4')}>
-        {/* ID Field */}
-        <div className="space-y-1.5">
-          <label className={cx('text-xs font-medium', 'text-charcoal-500')}>
+      <div className={cx('flex-1 overflow-y-auto', 'p-3 space-y-3')}>
+        {/* ID and Name grid */}
+        <div className="grid grid-cols-[2.5rem_1fr] gap-x-2 gap-y-2 items-center">
+          <label className={cx('text-[10px] font-medium uppercase tracking-wide', 'text-charcoal-400')}>
             ID
           </label>
-          <Input
-            value={node.id}
-            disabled
-            className={cx(
-              'text-xs font-mono',
-              'bg-cream-100/50',
-              'text-charcoal-400',
-              'cursor-not-allowed'
-            )}
-          />
-        </div>
-
-        {/* Name Field (not for start node) */}
-        {nodeType !== 'start' && (
-          <div className="space-y-1.5">
-            <label className={cx('text-xs font-medium', 'text-charcoal-500')}>
-              Name
-            </label>
+          <div className="relative group">
             <Input
-              value={data.label || ''}
-              onChange={handleNameChange}
-              placeholder={config.label}
-              className={cx('text-sm', 'bg-white/80')}
+              value={node.id}
+              readOnly
+              className={cx(
+                'h-7 text-xs font-mono pr-7',
+                'bg-cream-100/50',
+                'text-charcoal-500',
+                'cursor-default select-all'
+              )}
+              onClick={(e) => (e.target as HTMLInputElement).select()}
             />
+            <button
+              onClick={handleCopyId}
+              className={cx(
+                'absolute right-1 top-1/2 -translate-y-1/2',
+                'p-1 rounded',
+                'text-charcoal-400 hover:text-charcoal-600',
+                'hover:bg-cream-200',
+                'opacity-0 group-hover:opacity-100',
+                'transition-all'
+              )}
+              title="Copy ID"
+            >
+              {copied ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+            </button>
           </div>
-        )}
+
+          {nodeType !== 'start' && (
+            <>
+              <label className={cx('text-[10px] font-medium uppercase tracking-wide', 'text-charcoal-400')}>
+                Name
+              </label>
+              <Input
+                value={data.label || ''}
+                onChange={handleNameChange}
+                placeholder={config.label}
+                className={cx('h-7 text-xs', 'bg-white/80')}
+              />
+            </>
+          )}
+        </div>
 
         {/* Description Field (not for start node) */}
         {nodeType !== 'start' && (
-          <div className="space-y-1.5">
-            <label className={cx('text-xs font-medium', 'text-charcoal-500')}>
-              Description
-              <span className={cx('ml-1 text-red-500')}>*</span>
-            </label>
-            <textarea
+          <Section label="Description">
+            <Input
               value={data.description || ''}
               onChange={handleDescriptionChange}
-              rows={2}
-              className={cx(
-                'w-full px-3 py-2',
-                'text-sm',
-                'bg-white/80',
-                'border rounded-md',
-                hasDescriptionError ? 'border-red-400' : 'border-input',
-                'focus:outline-none focus:ring-2 focus:ring-terracotta-400 focus:border-transparent',
-                'placeholder:text-charcoal-400',
-                'resize-none'
-              )}
+              placeholder="Brief description of what this node does"
+              className={cx('h-7 text-xs', 'bg-white/80')}
             />
-          </div>
+          </Section>
         )}
 
         {/* Prompt Field (not for start node) */}
         {nodeType !== 'start' && (
-          <div className="space-y-1.5">
-            <label className={cx('text-xs font-medium', 'text-charcoal-500')}>
-              Prompt
-              <span className={cx('ml-1 text-red-500')}>*</span>
-            </label>
-            <div className={cx(hasPromptError && 'ring-1 ring-red-400 rounded-md')}>
-              <TiptapEditor
-                content={data.prompt || ''}
-                onChange={handlePromptChange}
-              />
-            </div>
-          </div>
+          <Section label="Prompt">
+            <ExpandableTextModal
+              title="Edit Prompt"
+              expandedContent={
+                <TiptapEditor
+                  content={data.prompt || ''}
+                  onChange={handlePromptChange}
+                />
+              }
+            >
+              <div className={cx(hasPromptError && 'ring-1 ring-red-400 rounded-md')}>
+                <TiptapEditor
+                  content={data.prompt || ''}
+                  onChange={handlePromptChange}
+                />
+              </div>
+            </ExpandableTextModal>
+          </Section>
         )}
 
-        {/* Branches (Condition only) */}
-        {nodeType === 'condition' && (
-          <div className="space-y-1.5">
-            <label className={cx('text-xs font-medium', 'text-charcoal-500')}>
-              Branches
-            </label>
-            <div className="space-y-2">
-              {(data.branches || ['Yes', 'No']).map((branch, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input
-                    value={branch}
-                    onChange={(e) => handleBranchChange(index, e.target.value)}
-                    className={cx('text-sm', 'bg-white/80', 'flex-1')}
-                  />
-                  {(data.branches?.length || 2) > 2 && (
-                    <button
-                      onClick={() => handleRemoveBranch(index)}
-                      className={cx(
-                        'p-1.5 rounded-lg',
-                        'text-charcoal-400 hover:text-red-500',
-                        'hover:bg-cream-300/70',
-                        'transition-colors'
-                      )}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddBranch}
-                className={cx('w-full', 'text-xs')}
-              >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Add Branch
-              </Button>
-            </div>
-          </div>
+        {/* Divider after prompt */}
+        {nodeType !== 'start' && (
+          <div className="border-t border-cream-300/50" />
         )}
 
         {/* Incoming Connections */}
         {nodeType !== 'start' && (
-          <div className="space-y-1.5">
-            <label className={cx('text-xs font-medium', 'text-charcoal-500')}>
-              Incoming Connections
-            </label>
-            <div className="space-y-2">
+          <Section label="Incoming">
+            <div className="flex flex-wrap gap-2 items-center">
               {incomingEdges.map((edge) => {
                 const sourceBranchName = getBranchNameForNode(edge.source, edge.sourceHandle);
                 return (
-                <div
-                  key={edge.id}
-                  className={cx(
-                    'flex items-center gap-2 p-2',
-                    'bg-white/60 rounded-lg',
-                    'border border-cream-300/50'
-                  )}
-                >
-                  <span className={cx('text-xs flex-1 truncate font-medium', 'text-charcoal-600')}>
-                    {getNodeName(edge.source)}
-                  </span>
-                  {sourceBranchName && (
-                    <span className={cx('text-xs px-1.5 py-0.5 rounded shrink-0', 'bg-amber-100 text-amber-700 font-medium')}>
-                      {sourceBranchName}
-                    </span>
-                  )}
-                  <span className={cx('text-xs text-charcoal-400')}>→</span>
-                  {(edge.data as EdgeData)?.label && (
-                    <span className={cx('text-xs px-1.5 py-0.5 rounded', 'bg-cream-300/70 text-charcoal-600')}>
-                      {(edge.data as EdgeData).label}
-                    </span>
-                  )}
-                  <button
-                    onClick={() => onDeleteEdge(edge.id)}
-                    className={cx(
-                      'p-1 rounded',
-                      'text-charcoal-400 hover:text-red-500',
-                      'hover:bg-cream-300/70',
-                      'transition-colors'
+                  <div key={edge.id} className="flex items-center gap-1">
+                    {sourceBranchName && (
+                      <span className={cx('text-[10px] px-1.5 py-0.5 rounded', 'bg-amber-100 text-amber-700 font-medium')}>
+                        {sourceBranchName}
+                      </span>
                     )}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
+                    <NodeChip 
+                      nodeId={edge.source} 
+                      nodes={nodes} 
+                      onDelete={() => onDeleteEdge(edge.id)}
+                    />
+                  </div>
                 );
               })}
-              {/* Add incoming connection */}
-              {availableSources.length > 0 && (
-                <Select value="" onValueChange={handleAddIncoming}>
-                  <SelectTrigger className={cx('h-8 text-xs', 'bg-white/60 border-dashed')}>
-                    <SelectValue placeholder="+ Add incoming..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableSources.map((n) => (
-                      <SelectItem key={n.id} value={n.id} className="text-xs">
-                        {getNodeName(n.id)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {incomingEdges.length === 0 && !showIncomingAdd && (
+                <span className="text-xs text-charcoal-400">None</span>
+              )}
+              {showIncomingAdd && (
+                <AddLink 
+                  onSelect={handleAddIncoming} 
+                  options={sourceOptions}
+                  placeholder="Add"
+                />
               )}
             </div>
-          </div>
+          </Section>
         )}
 
         {/* Outgoing Connections */}
-        <div className="space-y-1.5">
-          <label className={cx('text-xs font-medium', 'text-charcoal-500')}>
-            Outgoing Connections
-          </label>
-          <div className="space-y-2">
-            {outgoingEdges.map((edge) => {
-              const branchName = nodeType === 'condition' ? getBranchName(edge.sourceHandle) : null;
-              return (
-                <div
-                  key={edge.id}
-                  className={cx(
-                    'flex items-center gap-2 p-2',
-                    'bg-white/60 rounded-lg',
-                    'border border-cream-300/50'
-                  )}
-                >
-                  {branchName && (
-                    <span className={cx('text-xs px-1.5 py-0.5 rounded shrink-0', 'bg-amber-100 text-amber-700 font-medium')}>
-                      {branchName}
-                    </span>
-                  )}
-                  <span className={cx('text-xs text-charcoal-400')}>→</span>
-                  <span className={cx('text-xs flex-1 truncate font-medium', 'text-charcoal-600')}>
-                    {getNodeName(edge.target)}
-                  </span>
-                  {(edge.data as EdgeData)?.label && (
-                    <span className={cx('text-xs px-1.5 py-0.5 rounded', 'bg-cream-300/70 text-charcoal-600')}>
-                      {(edge.data as EdgeData).label}
-                    </span>
-                  )}
-                  <button
-                    onClick={() => onDeleteEdge(edge.id)}
-                    className={cx(
-                      'p-1 rounded',
-                      'text-charcoal-400 hover:text-red-500',
-                      'hover:bg-cream-300/70',
-                      'transition-colors'
+        <Section label="Outgoing">
+          {nodeType === 'condition' ? (
+            <div className="space-y-2">
+              {(data.branches || ['Yes', 'No']).map((branchName, index) => {
+                const handleId = `branch-${index}`;
+                const edge = outgoingEdges.find((e) => e.sourceHandle === handleId);
+                const isAvailable = availableBranches.some((b) => b.handleId === handleId);
+                const canDelete = (data.branches?.length || 2) > 2;
+                
+                return (
+                  <div key={handleId} className="flex items-center gap-2">
+                    <Input
+                      value={branchName}
+                      onChange={(e) => handleBranchChange(index, e.target.value)}
+                      className={cx('h-6 text-[11px] w-24 shrink-0', 'bg-amber-50 border-amber-200')}
+                    />
+                    <span className="text-charcoal-400 text-xs">→</span>
+                    {edge ? (
+                      <NodeChip 
+                        nodeId={edge.target} 
+                        nodes={nodes} 
+                        onDelete={() => onDeleteEdge(edge.id)}
+                      />
+                    ) : isAvailable && availableTargets.length > 0 ? (
+                      <AddLink
+                        onSelect={(targetId) => handleAddOutgoing(targetId, handleId)}
+                        options={targetOptions}
+                        placeholder="Add"
+                      />
+                    ) : (
+                      <span className="text-xs text-charcoal-400">—</span>
                     )}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              );
-            })}
-            {/* Add outgoing connection */}
-            {canAddOutgoing && nodeType === 'condition' && (
-              // Condition node: show branch-specific dropdowns
-              availableBranches.map((branch) => (
-                <Select
-                  key={branch.handleId}
-                  value=""
-                  onValueChange={(targetId) => handleAddOutgoing(targetId, branch.handleId)}
-                >
-                  <SelectTrigger className={cx('h-8 text-xs', 'bg-white/60 border-dashed')}>
-                    <SelectValue placeholder={`+ ${branch.name} →`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableTargets.map((n) => (
-                      <SelectItem key={n.id} value={n.id} className="text-xs">
-                        {getNodeName(n.id)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ))
-            )}
-            {canAddOutgoing && nodeType !== 'condition' && (
-              <Select value="" onValueChange={(targetId) => handleAddOutgoing(targetId)}>
-                <SelectTrigger className={cx('h-8 text-xs', 'bg-white/60 border-dashed')}>
-                  <SelectValue placeholder="+ Add outgoing..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableTargets.map((n) => (
-                    <SelectItem key={n.id} value={n.id} className="text-xs">
-                      {getNodeName(n.id)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-        </div>
+                    {canDelete && (
+                      <button
+                        onClick={() => handleRemoveBranch(index)}
+                        className={cx(
+                          'p-0.5 rounded ml-auto',
+                          'text-charcoal-300 hover:text-red-500',
+                          'transition-colors'
+                        )}
+                        title="Remove branch"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              <button
+                onClick={handleAddBranch}
+                className={cx(
+                  'inline-flex items-center gap-0.5',
+                  'text-xs text-charcoal-400 hover:text-charcoal-600',
+                  'transition-colors'
+                )}
+              >
+                <Plus className="w-3 h-3" />
+                Add Branch
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2 items-center">
+              {outgoingEdges.map((edge) => (
+                <NodeChip 
+                  key={edge.id}
+                  nodeId={edge.target} 
+                  nodes={nodes} 
+                  onDelete={() => onDeleteEdge(edge.id)}
+                />
+              ))}
+              {outgoingEdges.length === 0 && !canAddOutgoing && (
+                <span className="text-xs text-charcoal-400">None</span>
+              )}
+              {canAddOutgoing && (
+                <AddLink
+                  onSelect={(targetId) => handleAddOutgoing(targetId)}
+                  options={targetOptions}
+                  placeholder="Add"
+                />
+              )}
+            </div>
+          )}
+        </Section>
       </div>
     </div>
     </>

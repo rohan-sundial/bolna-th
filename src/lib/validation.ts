@@ -110,14 +110,6 @@ export function validateWorkflow(nodes: Node[], edges: Edge[]): ValidationResult
         });
       }
 
-      if (!data.description || data.description.trim() === '') {
-        errors.push({
-          id: generateErrorId('action-no-description', node.id),
-          nodeId: node.id,
-          message: `[${nodeType}][${nodeName}]: missing description`,
-          field: 'description',
-        });
-      }
 
       if (nodeIncoming.length === 0) {
         errors.push({
@@ -138,14 +130,6 @@ export function validateWorkflow(nodes: Node[], edges: Edge[]): ValidationResult
         });
       }
 
-      if (!data.description || data.description.trim() === '') {
-        errors.push({
-          id: generateErrorId('condition-no-description', node.id),
-          nodeId: node.id,
-          message: `[${nodeType}][${nodeName}]: missing description`,
-          field: 'description',
-        });
-      }
 
       if (nodeIncoming.length === 0) {
         errors.push({

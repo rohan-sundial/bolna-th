@@ -9,7 +9,7 @@ export function UserProfile({ user }: UserProfileProps) {
   const initial = user.name.charAt(0).toUpperCase();
 
   return (
-    <div className={cx("p-2", "border-t border-cream-300")}>
+    <div className={cx("p-2")}>
       <div className={cx("flex items-center gap-3", "px-3 py-2")}>
         <div
           className={cx(

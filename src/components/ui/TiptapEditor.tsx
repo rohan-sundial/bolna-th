@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -78,6 +79,12 @@ export function TiptapEditor({ content, onChange, placeholder = '' }: TiptapEdit
     },
   });
 
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content, false);
+    }
+  }, [editor, content]);
+
   if (!editor) {
     return null;
   }
@@ -85,10 +92,10 @@ export function TiptapEditor({ content, onChange, placeholder = '' }: TiptapEdit
   return (
     <div
       className={cx(
-        'border border-input rounded-md',
-        'bg-white/80',
-        'focus-within:ring-2 focus-within:ring-terracotta-400 focus-within:border-transparent',
-        'overflow-hidden'
+        'border border-cream-300 rounded-md',
+        'bg-white',
+        'overflow-hidden',
+        'h-full flex flex-col'
       )}
     >
       {/* Toolbar */}
@@ -96,7 +103,8 @@ export function TiptapEditor({ content, onChange, placeholder = '' }: TiptapEdit
         className={cx(
           'flex items-center gap-0.5 px-2 py-1.5',
           'border-b border-cream-300/50',
-          'bg-cream-50/50'
+          'bg-cream-50/50',
+          'shrink-0'
         )}
       >
         <ToolbarButton
@@ -150,7 +158,9 @@ export function TiptapEditor({ content, onChange, placeholder = '' }: TiptapEdit
       </div>
 
       {/* Editor */}
-      <EditorContent editor={editor} />
+      <div className="flex-1 min-h-0 overflow-auto">
+        <EditorContent editor={editor} className="h-full [&>.tiptap]:h-full [&>.tiptap]:overflow-auto" />
+      </div>
     </div>
   );
 }
