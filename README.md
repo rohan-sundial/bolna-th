@@ -84,9 +84,3 @@ I built this app with assistance from **Cursor's Agent Mode** (Opus 4.5).
 4. **Persistence**: localStorage-based workflow storage with auto-save, allowing multiple workflows to be managed.
 
 5. **UX**: Resizable panels, keyboard shortcuts (Delete to remove), drag-and-drop from node library, and auto-layout for quick organization.
-
-## Screenshots
-
-<!-- Add your screenshots here -->
-<!-- ![Flow Builder](./screenshots/builder.png) -->
-<!-- ![Workflows List](./screenshots/flows.png) -->
