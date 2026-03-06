@@ -26,7 +26,7 @@ npm run build
 npm run preview
 ```
 
-## Features
+## Some Features
 
 ### Canvas
 - ✅ Drag or click to add nodes from library
@@ -69,23 +69,6 @@ npm run preview
 - **Dagre** - Auto-layout algorithm
 - **Vite** - Build tool
 
-## Project Structure
-
-```
-src/
-├── components/
-│   ├── builder/           # Canvas, nodes, panels
-│   │   ├── node-details-panel/
-│   │   ├── validation-panel/
-│   │   └── json-preview-panel/
-│   ├── flows/             # Workflow list page
-│   └── ui/                # Reusable UI components
-├── hooks/                 # Custom hooks (organized by feature)
-├── contexts/              # React contexts (Auth, Validation)
-├── lib/                   # Core logic (validation, import/export)
-├── services/              # Storage service
-└── pages/                 # Page components
-```
 
 ## Design Choices
 
