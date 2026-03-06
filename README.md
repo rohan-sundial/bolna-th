@@ -69,6 +69,9 @@ npm run preview
 - **Dagre** - Auto-layout algorithm
 - **Vite** - Build tool
 
+## Development
+
+I built this app with assistance from **Cursor's Agent Mode** (Opus 4.5).
 
 ## Design Choices
 
