@@ -1,21 +1,106 @@
-# React + TypeScript + Vite
+# Visual Flow Builder
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A visual workflow builder for creating and managing flowcharts with conditional transitions.
 
-While this project uses React, Vite supports many popular JS frameworks. [See all the supported frameworks](https://vitejs.dev/guide/#scaffolding-your-first-vite-project).
+## Live Demo
 
-## Deploy Your Own
+🔗 **[https://bolna-th.vercel.app/](https://bolna-th.vercel.app/)**
 
-Deploy your own Vite project with Vercel.
+📦 **[GitHub Repository](https://github.com/rohan-sundial/bolna-th)**
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vercel/examples/tree/main/framework-boilerplates/vite-react&template=vite-react)
+## Getting Started
 
-_Live Example: https://vite-react-example.vercel.app_
+```bash
+# Clone the repository
+git clone https://github.com/rohan-sundial/bolna-th.git
+cd bolna-th
 
-### Deploying From Your Terminal
+# Install dependencies
+npm install
 
-You can deploy your new Vite project with a single command from your terminal using [Vercel CLI](https://vercel.com/download):
+# Run development server
+npm run dev
 
-```shell
-$ vercel
+# Or build for production
+npm run build
+npm run preview
 ```
+
+## Features
+
+### Canvas
+- ✅ Drag or click to add nodes from library
+- ✅ Connect nodes by drawing edges
+- ✅ Edge labels
+- ✅ Auto-layout with Dagre algorithm
+- ✅ Pan/Select interaction modes
+- ✅ Delete key removes selected nodes/edges
+
+### Node Details Panel
+- ✅ Markdown prompt editor
+- ✅ Manage incoming/outgoing connections
+- ✅ Condition nodes with dynamic branches
+
+### JSON Preview
+- ✅ Live-generated JSON as you edit
+- ✅ Syntax highlighting (Monaco Editor)
+- ✅ Copy to clipboard
+- ✅ Download JSON file
+
+### Validation
+- ✅ Required fields validation (name, prompt)
+- ✅ Start node existence check
+- ✅ Disconnected node warnings
+- ✅ Inline error display with click-to-focus
+- ✅ Real-time validation panel
+
+### Bonus Features
+- ✅ Import JSON to reconstruct flows
+- ✅ Multiple workflows with persistent storage (localStorage)
+- ✅ Auto-save functionality
+
+## Tech Stack
+
+- **React 19** + **TypeScript**
+- **React Flow** - Canvas and node management
+- **Tailwind CSS** - Styling
+- **Monaco Editor** - JSON preview with syntax highlighting
+- **Tiptap** - Rich text editor for descriptions
+- **Dagre** - Auto-layout algorithm
+- **Vite** - Build tool
+
+## Project Structure
+
+```
+src/
+├── components/
+│   ├── builder/           # Canvas, nodes, panels
+│   │   ├── node-details-panel/
+│   │   ├── validation-panel/
+│   │   └── json-preview-panel/
+│   ├── flows/             # Workflow list page
+│   └── ui/                # Reusable UI components
+├── hooks/                 # Custom hooks (organized by feature)
+├── contexts/              # React contexts (Auth, Validation)
+├── lib/                   # Core logic (validation, import/export)
+├── services/              # Storage service
+└── pages/                 # Page components
+```
+
+## Design Choices
+
+1. **Component Architecture**: Heavy use of custom hooks to separate logic from presentation. Each major feature (validation panel, JSON preview, node details) has its own hook directory with a main config hook composing smaller specialized hooks.
+
+2. **State Management**: React Context for cross-cutting concerns (validation errors), local state for component-specific data, React Flow for canvas state.
+
+3. **Validation**: Real-time validation with a dedicated panel showing all errors. Clicking an error focuses the relevant node on the canvas.
+
+4. **Persistence**: localStorage-based workflow storage with auto-save, allowing multiple workflows to be managed.
+
+5. **UX**: Resizable panels, keyboard shortcuts (Delete to remove), drag-and-drop from node library, and auto-layout for quick organization.
+
+## Screenshots
+
+<!-- Add your screenshots here -->
+<!-- ![Flow Builder](./screenshots/builder.png) -->
+<!-- ![Workflows List](./screenshots/flows.png) -->

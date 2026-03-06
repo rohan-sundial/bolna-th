@@ -1,68 +1,97 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* Custom brand colors */
+  --color-cream-50: #FDFBF7;
+  --color-cream-100: #FAF6EE;
+  --color-cream-200: #F5EDE0;
+  --color-cream-300: #E8DCC8;
+
+  --color-clay-400: #C4A77D;
+  --color-clay-500: #B8956C;
+  --color-clay-600: #A67C52;
+
+  --color-terracotta-500: #D4785C;
+  --color-terracotta-600: #C4603D;
+  --color-terracotta-700: #A84E32;
+
+  --color-charcoal-700: #4A4540;
+  --color-charcoal-800: #353330;
+  --color-charcoal-900: #1F1E1C;
+
+  --font-family-sans: 'Work Sans', system-ui, sans-serif;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --radius: 0.625rem;
+  --background: #FDFBF7;
+  --foreground: #353330;
+  --card: #FAF6EE;
+  --card-foreground: #353330;
+  --popover: #FDFBF7;
+  --popover-foreground: #353330;
+  --primary: #C4603D;
+  --primary-foreground: #FDFBF7;
+  --secondary: #F5EDE0;
+  --secondary-foreground: #353330;
+  --muted: #F5EDE0;
+  --muted-foreground: #4A4540;
+  --accent: #F5EDE0;
+  --accent-foreground: #353330;
+  --destructive: #dc2626;
+  --border: #E8DCC8;
+  --input: #E8DCC8;
+  --ring: #D4785C;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-  a:hover {
-    color: #747bff;
+  body {
+    @apply bg-cream-50 text-charcoal-800 antialiased font-sans;
   }
-  button {
-    background-color: #f9f9f9;
-  }
+}
+
+.search-highlight {
+  background-color: #F5D0C5;
+  color: var(--color-charcoal-800);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Custom animation delay utility */
+.animation-delay-300 {
+  animation-delay: 300ms;
 }

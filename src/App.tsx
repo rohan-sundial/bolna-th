@@ -1,35 +1,65 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
+import { AppInitScreen } from "./components/AppInitScreen";
+import { RootLayout } from "./components/layout/RootLayout";
+import { AuthProvider, useAuthContext } from "./context/AuthContext";
+import { BuilderPage } from "./pages/BuilderPage";
+import { FlowsPage } from "./pages/FlowsPage";
 
-function App() {
-  const [count, setCount] = useState(0)
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/flows" replace />,
+      },
+      {
+        path: "flows",
+        element: <FlowsPage />,
+      },
+      {
+        path: "flows/:id",
+        element: <BuilderPage />,
+      },
+    ],
+  },
+]);
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+function AppContent() {
+  const { isError, isLoading } = useAuthContext();
+
+  if (isError) {
+    return (
+      <AppInitScreen
+        variant="error"
+        message="Failed to initialize. Please refresh the page."
+      />
+    );
+  }
+
+  if (isLoading) {
+    return <AppInitScreen variant="loading" message="Initializing..." />;
+  }
+
+  return <RouterProvider router={router} />;
 }
 
-export default App
+function App() {
+  return (
+    <TooltipProvider delayDuration={300}>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+      <Toaster position="bottom-right" />
+    </TooltipProvider>
+  );
+}
+
+export default App;
