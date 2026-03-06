@@ -1,16 +1,16 @@
-import { useEffect } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import cx from "classnames";
 import {
   Bold,
-  List,
-  ListOrdered,
   Heading1,
   Heading2,
   Heading3,
+  List,
+  ListOrdered,
 } from "lucide-react";
+import { useEffect } from "react";
 
 interface TiptapEditorProps {
   content: string;
