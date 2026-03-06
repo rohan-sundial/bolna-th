@@ -1,90 +1,106 @@
-# Frontend Assignment
+# Visual Flow Builder
 
-**Tech** Any modern frontend stack. React with TypeScript is common, but all are all fine. You may use any supporting libraries.
+A visual workflow builder for creating and managing flowcharts with conditional transitions.
 
----
+## Live Demo
 
-## **Goal**
+🔗 **[https://bolna-th.vercel.app/](https://bolna-th.vercel.app/)**
 
-You're building a simple visual flow builder — think of it like a lightweight flowchart tool where users connect steps (nodes) with conditional transitions (edges). This mirrors how many modern tools (Zapier, n8n, chatbot builders) work.
+📦 **[GitHub Repository](https://github.com/rohan-sundial/bolna-th)**
 
+## Getting Started
 
-## **What to build**
-It should be a single-page app where users can visually construct a flow and export it as JSON.
+```bash
+# Clone the repository
+git clone https://github.com/rohan-sundial/bolna-th.git
+cd bolna-th
 
-### 1. Canvas
+# Install dependencies
+npm install
 
-- Add, delete, and drag nodes around
-- Connect nodes by drawing edges between them
-- Show a label on each edge (the transition condition)
-- Visually mark one node as the "start" node
+# Run development server
+npm run dev
 
-### 2. Node Sidebar
-When a user clicks a node, show a panel to:
-
-- Edit the node's name/ID (must be unique)
-- Write a description
-- Manage outgoing edges — add/remove, pick target node, write condition text
-
-### 3. JSON Preview
-
-- Show the live-generated JSON as the user edits
-- Syntax highlight it if you'd like
-
-The app should validate input as the user works and show a live preview of the schema.
-
----
-
-## **Example of Schema**
-Below is an example of schema. You're free to choose and define your own schema.
+# Or build for production
+npm run build
+npm run preview
 ```
-interface Edge {
-  to_node_id: string;
-  condition: string;
-  parameters?: Record<string, string>; // optional key-value pairs
-}
 
-interface Node {
-  id: string;
-  description?: string;
-  prompt: string;
-  edges: Edge[];
-}
+## Features
+
+### Canvas
+- ✅ Drag or click to add nodes from library
+- ✅ Connect nodes by drawing edges
+- ✅ Edge labels
+- ✅ Auto-layout with Dagre algorithm
+- ✅ Pan/Select interaction modes
+- ✅ Delete key removes selected nodes/edges
+
+### Node Details Panel
+- ✅ Markdown prompt editor
+- ✅ Manage incoming/outgoing connections
+- ✅ Condition nodes with dynamic branches
+
+### JSON Preview
+- ✅ Live-generated JSON as you edit
+- ✅ Syntax highlighting (Monaco Editor)
+- ✅ Copy to clipboard
+- ✅ Download JSON file
+
+### Validation
+- ✅ Required fields validation (name, prompt)
+- ✅ Start node existence check
+- ✅ Disconnected node warnings
+- ✅ Inline error display with click-to-focus
+- ✅ Real-time validation panel
+
+### Bonus Features
+- ✅ Import JSON to reconstruct flows
+- ✅ Multiple workflows with persistent storage (localStorage)
+- ✅ Auto-save functionality
+
+## Tech Stack
+
+- **React 19** + **TypeScript**
+- **React Flow** - Canvas and node management
+- **Tailwind CSS** - Styling
+- **Monaco Editor** - JSON preview with syntax highlighting
+- **Tiptap** - Rich text editor for descriptions
+- **Dagre** - Auto-layout algorithm
+- **Vite** - Build tool
+
+## Project Structure
+
 ```
-Your exact structure may vary slightly depending on your implementation.
+src/
+├── components/
+│   ├── builder/           # Canvas, nodes, panels
+│   │   ├── node-details-panel/
+│   │   ├── validation-panel/
+│   │   └── json-preview-panel/
+│   ├── flows/             # Workflow list page
+│   └── ui/                # Reusable UI components
+├── hooks/                 # Custom hooks (organized by feature)
+├── contexts/              # React contexts (Auth, Validation)
+├── lib/                   # Core logic (validation, import/export)
+├── services/              # Storage service
+└── pages/                 # Page components
+```
 
+## Design Choices
 
-## Validations
-### Basic
+1. **Component Architecture**: Heavy use of custom hooks to separate logic from presentation. Each major feature (validation panel, JSON preview, node details) has its own hook directory with a main config hook composing smaller specialized hooks.
 
-- Node IDs must be unique
-- Description fields are required
-- Starting node must exist
-- Show inline errors, not just console warnings
+2. **State Management**: React Context for cross-cutting concerns (validation errors), local state for component-specific data, React Flow for canvas state.
 
+3. **Validation**: Real-time validation with a dedicated panel showing all errors. Clicking an error focuses the relevant node on the canvas.
 
-### Bonus
+4. **Persistence**: localStorage-based workflow storage with auto-save, allowing multiple workflows to be managed.
 
-- Import JSON to reconstruct a flow on canvas
-- Copy/download JSON
-- Delete key removes selected node/edge
-- Warn about disconnected nodes
-- Allow editing and removing properties at any time and validate the properties.
+5. **UX**: Resizable panels, keyboard shortcuts (Delete to remove), drag-and-drop from node library, and auto-layout for quick organization.
 
----
+## Screenshots
 
-### UI Expectations
-- Clean and modern interface
-- Clear error messages and visual feedback when validation fails
-- Easy, intuitive flow so users can figure it out without instructions
-
-
-## **Deliverables**
-
-- A hosted working version (Vercel, Netlify, CodeSandbox, Replit, or similar)
-- A clean and readable codebase
-- A short README explaining how to run the project and design choices
-- Optional screenshots or a short demo video
-
-## Submissions
-**Please mail a zip file with the code and send a link to the hosted version to [<ins>`sse+submissions@bolna.ai`</ins>](mailto:sse+submissions@bolna.ai).**
+<!-- Add your screenshots here -->
+<!-- ![Flow Builder](./screenshots/builder.png) -->
+<!-- ![Workflows List](./screenshots/flows.png) -->
